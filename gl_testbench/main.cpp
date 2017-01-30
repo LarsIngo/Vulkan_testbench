@@ -262,7 +262,7 @@ void shutdown() {
 
 int main(int argc, char *argv[])
 {
-	renderer = Renderer::makeRenderer(Renderer::BACKEND::GL45);
+	renderer = Renderer::makeRenderer(Renderer::BACKEND::VULKAN);
 	renderer->initialize();
 	renderer->setClearColor(0.5, 0.1, 0.1, 1.0);
 	initialiseTestbench();

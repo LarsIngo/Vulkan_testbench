@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "VulkanRenderer.hpp"
+#include "VulkanRenderer.h"
 
-#include "MaterialGL.h"
-#include "MeshGL.h"
+#include "MaterialVK.h"
+#include "MeshVK.h"
 #include "Technique.h"
-#include "ResourceBindingGL.h"
-#include "RenderStateGL.h"
-#include "VertexBufferGL.h"
-#include "ConstantBufferGL.h"
-#include "Texture2DGL.h"
+#include "ResourceBindingVK.h"
+#include "RenderStateVK.h"
+#include "VertexBufferVK.h"
+#include "ConstantBufferVK.h"
+#include "Texture2DVK.h"
 
 VulkanRenderer::VulkanRenderer()
 {
@@ -25,6 +25,13 @@ VulkanRenderer::VulkanRenderer()
 
 VulkanRenderer::~VulkanRenderer()
 {
+    m_DeInitSwapchainImageViews();
+    m_DeInitSwapchain();
+    m_DeInitSurface();
+    m_DeInitDevice();
+    m_DeInitDebug();
+    m_DeInitInstance();
+    m_DeInitWindow();
 }
 
 int VulkanRenderer::shutdown()
@@ -34,52 +41,61 @@ int VulkanRenderer::shutdown()
     return 0;
 }
 
-Mesh* VulkanRenderer::makeMesh() {
-    return new MeshGL();
+Mesh* VulkanRenderer::makeMesh()
+{
+    return (Mesh*)new MeshVK();
 }
 
 Texture2D* VulkanRenderer::makeTexture2D()
 {
-    return (Texture2D*)new Texture2DGL();
+    return (Texture2D*)new Texture2DVK();
 }
 
 Sampler2D* VulkanRenderer::makeSampler2D()
 {
-    return (Sampler2D*)new Sampler2DGL();
+    return (Sampler2D*)new Sampler2DVK();
 }
 
-ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned int location) {
-    return new ConstantBufferGL(NAME, location);
+ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned int location)
+{
+    return (ConstantBuffer*)new ConstantBufferVK(NAME, location);
 }
 
-std::string VulkanRenderer::getShaderPath() {
+std::string VulkanRenderer::getShaderPath()
+{
     return std::string("..\\assets\\GL45\\");
 }
 
-std::string VulkanRenderer::getShaderExtension() {
+std::string VulkanRenderer::getShaderExtension()
+{
     return std::string(".glsl");
 }
 
-VertexBuffer* VulkanRenderer::makeVertexBuffer() {
-    return new VertexBufferGL();
+VertexBuffer* VulkanRenderer::makeVertexBuffer()
+{
+    return (VertexBuffer*)new VertexBufferVK();
 };
 
-Material* VulkanRenderer::makeMaterial() {
-    return new MaterialGL();
+Material* VulkanRenderer::makeMaterial()
+{
+    return (Material*)new MaterialVK();
 }
 
-ResourceBinding* VulkanRenderer::makeResourceBinding() {
-    return new ResourceBindingGL();
+ResourceBinding* VulkanRenderer::makeResourceBinding()
+{
+    return (ResourceBinding*)new ResourceBindingVK();
 }
 
-RenderState* VulkanRenderer::makeRenderState() {
-    RenderStateGL* newRS = new RenderStateGL();
-    newRS->setGlobalWireFrame(&this->m_global_wireframe_mode);
-    newRS->setWireFrame(false);
+RenderState* VulkanRenderer::makeRenderState()
+{
+    RenderStateVK* newRS = new RenderStateVK();
+    //newRS->setGlobalWireFrame(&this->m_global_wireframe_mode);
+    //newRS->setWireFrame(false);
     return (RenderState*)newRS;
 }
 
-int VulkanRenderer::initialize(unsigned int width, unsigned int height) {
+int VulkanRenderer::initialize(unsigned int width, unsigned int height)
+{
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
@@ -119,7 +135,7 @@ TODO.
 void VulkanRenderer::submit(Mesh* mesh)
 {
     m_draw_list.push_back(mesh);
-};
+}
 
 /*
 Naive implementation, no re-ordering, checking for state changes, etc.
@@ -127,48 +143,48 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
-    for (auto mesh : m_draw_list)
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
-        for (auto t : mesh->textures)
-        {
-            // we do not really know here if the sampler has been
-            // defined in the shader.
-            t.second->bind(t.first);
-        }
+    //for (auto mesh : m_draw_list)
+    //{
+    //    glBindTexture(GL_TEXTURE_2D, 0);
+    //    for (auto t : mesh->textures)
+    //    {
+    //        // we do not really know here if the sampler has been
+    //        // defined in the shader.
+    //        t.second->bind(t.first);
+    //    }
 
-        Technique* t = mesh->technique;
-        t->enable(this);
+    //    Technique* t = mesh->technique;
+    //    t->enable(this);
 
-        // bind buffers for this mesh.
-        // this implementation only has buffers in the Vertex Shader!
-        // bind them all before drawing.
-        size_t numberElements = 3;
-        for (auto element : mesh->geometryBuffers) {
-            mesh->bindIAVertexBuffer(element.first);
-            numberElements = element.second.numElements;
-        }
+    //    // bind buffers for this mesh.
+    //    // this implementation only has buffers in the Vertex Shader!
+    //    // bind them all before drawing.
+    //    size_t numberElements = 3;
+    //    for (auto element : mesh->geometryBuffers) {
+    //        mesh->bindIAVertexBuffer(element.first);
+    //        numberElements = element.second.numElements;
+    //    }
 
-        mesh->txBuffer->bind(mesh->technique->material);
+    //    mesh->txBuffer->bind(mesh->technique->material);
 
-        // everything is bound!
-        // always 0 because we are just generating gl_VertexId
-        glDrawArrays(GL_TRIANGLES, 0, numberElements);
-    }
-    m_draw_list.clear();
-};
+    //    // everything is bound!
+    //    // always 0 because we are just generating gl_VertexId
+    //    glDrawArrays(GL_TRIANGLES, 0, numberElements);
+    //}
+    //m_draw_list.clear();
+}
 
 
 void VulkanRenderer::present()
 {
-    SDL_GL_SwapWindow(m_window);
-};
+    //SDL_GL_SwapWindow(m_window);
+}
 
 void VulkanRenderer::setClearColor(float r, float g, float b, float a)
 {
     m_clear_color[0] = r; m_clear_color[1] = g; m_clear_color[2] = b; m_clear_color[3] = a;
     //glClearColor(r, g, b, a);
-};
+}
 
 void VulkanRenderer::clearBuffer(unsigned int flag)
 {
@@ -178,17 +194,19 @@ void VulkanRenderer::clearBuffer(unsigned int flag)
     //using namespace CLEAR_BUFFER_FLAGS;
     //GLuint glFlags = BUFFER_MAP[flag & COLOR] | BUFFER_MAP[flag & DEPTH] | BUFFER_MAP[flag & STENCIL];
     //glClear(glFlags);
-};
+}
 
-void VulkanRenderer::setRenderTarget(RenderTarget* rt) {};
+void VulkanRenderer::setRenderTarget(RenderTarget* rt)
+{
+
+}
 
 void VulkanRenderer::setRenderState(RenderState* ps)
 {
     // naive implementation
-    ps->set();
-};
+    //ps->set();
+}
 
-// SDL.
 void VulkanRenderer::m_InitWindow()
 {
 

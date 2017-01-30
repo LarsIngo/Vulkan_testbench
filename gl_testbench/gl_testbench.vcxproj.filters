@@ -16,6 +16,9 @@
     <Filter Include="Vulkan">
       <UniqueIdentifier>{2a53d1ed-6bfc-4375-8cf9-059840c3e74a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Vulkan\Tools">
+      <UniqueIdentifier>{fa161d88-29a9-4af8-a0e8-0a8ebf471f3e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -105,10 +108,37 @@
     <ClCompile Include="Sampler2DGL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vkTools.cpp">
+    <ClCompile Include="VulkanRenderer.cpp">
       <Filter>Vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanRenderer.cpp">
+    <ClCompile Include="vkTools.cpp">
+      <Filter>Vulkan\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexBufferVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture2DVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantBufferVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler2DVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="TransformVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceBindingVK.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderStateVK.cpp">
       <Filter>Vulkan</Filter>
     </ClCompile>
   </ItemGroup>
@@ -204,9 +234,36 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vkTools.hpp">
+      <Filter>Vulkan\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialVK.h">
       <Filter>Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRenderer.hpp">
+    <ClInclude Include="MeshVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture2DVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBufferVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBufferVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler2DVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceBindingVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderStateVK.h">
       <Filter>Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
