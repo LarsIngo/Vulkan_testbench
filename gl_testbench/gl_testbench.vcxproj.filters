@@ -141,6 +141,9 @@
     <ClCompile Include="RenderStateVK.cpp">
       <Filter>Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="GPUMemoryBlock.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -233,9 +236,6 @@
     <ClInclude Include="Sampler2DGL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vkTools.hpp">
-      <Filter>Vulkan\Tools</Filter>
-    </ClInclude>
     <ClInclude Include="MaterialVK.h">
       <Filter>Vulkan</Filter>
     </ClInclude>
@@ -264,6 +264,12 @@
       <Filter>Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="RenderStateVK.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vkTools.hpp">
+      <Filter>Vulkan\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUMemoryBlock.h">
       <Filter>Vulkan</Filter>
     </ClInclude>
   </ItemGroup>

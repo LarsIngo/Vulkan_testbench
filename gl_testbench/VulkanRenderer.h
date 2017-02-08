@@ -1,15 +1,18 @@
 #pragma once
 
-#define BUILD_ENABLE_VULKAN_DEBUG 1
-
 #include "Renderer.h"
-#include <SDL.h>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
+#include "GPUMemoryBlock.h"
 
+#define BUILD_ENABLE_VULKAN_DEBUG 1
+#include <vulkan/vulkan.h>
 #pragma comment(lib,"vulkan-1.lib")
-#pragma comment(lib,"SDL2.lib")
-#pragma comment(lib,"SDL2main.lib")
+#include "vkTools.hpp"
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#pragma comment(lib,"glfw3.lib")
 
 class VulkanRenderer : public Renderer
 {
@@ -43,11 +46,38 @@ public:
     void frame();
     void present();
 
-private:
     // Window.
-    SDL_Window* m_window = nullptr;
+    GLFWwindow* m_window = nullptr;
     unsigned int m_width = 0;
     unsigned int m_height = 0;
+
+    struct Vertex {
+        glm::vec2 position;
+        glm::vec3 color;
+
+        static VkVertexInputBindingDescription GetBindingDescription() {
+            VkVertexInputBindingDescription binding_description = {};
+            binding_description.binding = 0;
+            binding_description.stride = sizeof(Vertex);
+            binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            return binding_description;
+        }
+
+        static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions() {
+            std::vector<VkVertexInputAttributeDescription> attribute_descriptions(2);
+            attribute_descriptions[0].binding = 0;
+            attribute_descriptions[0].location = 0;
+            attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+            attribute_descriptions[0].offset = offsetof(Vertex, position);
+            attribute_descriptions[1].binding = 0;
+            attribute_descriptions[1].location = 1;
+            attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attribute_descriptions[1].offset = offsetof(Vertex, color);
+            return attribute_descriptions;
+        }
+    };
+
+private:
 
     // Vulkan.
     VkInstance m_instance = VK_NULL_HANDLE;
@@ -73,6 +103,25 @@ private:
     std::vector<VkImage> m_swapchain_image_list;
     std::vector<VkImageView> m_swapchain_image_view_list;
 
+    GPUMemoryBlock* m_vertex_memory;
+
+    VkCommandPool m_command_pool = VK_NULL_HANDLE;
+    VkQueue m_graphics_queue = VK_NULL_HANDLE;
+    VkQueue m_present_queue = VK_NULL_HANDLE;
+
+    VkSemaphore m_present_complete_semaphore = VK_NULL_HANDLE;
+    VkSemaphore m_render_complete_semaphore = VK_NULL_HANDLE;
+    uint32_t m_render_swapchain_image_index = 0;
+
+    std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
+    std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
+    VkRenderPass m_render_pass = VK_NULL_HANDLE;
+
+    VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
+    VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;
+    VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
+    VkPipeline m_graphics_pipeline = VK_NULL_HANDLE;
+
     // Meshes to draw.
     std::vector<Mesh*> m_draw_list;
 
@@ -82,7 +131,7 @@ private:
     // Clear color.
     float m_clear_color[4] = { 0,0,0,0 };
 
-    // SDL.
+    // Window.
     void m_InitWindow();
     void m_DeInitWindow();
 
@@ -113,4 +162,28 @@ private:
     // Swapchain views.
     void m_InitSwapchainImageViews();
     void m_DeInitSwapchainImageViews();
+
+    // Render pass.
+    void m_InitRenderPass();
+    void m_DeInitRenderPass();
+
+    // Pipeline.
+    void m_InitGraphicsPipeline();
+    void m_DeInitGraphicsPipeline();
+
+    // Allocate device memory.
+    void m_InitVertexDeviceMemory();
+    void m_DeInitVertexDeviceMemory();
+
+    // Command pool.
+    void m_InitCommandPool();
+    void m_DeInitCommandPool();
+
+    // Semaphores.
+    void m_InitSemaphores();
+    void m_DeInitSemaphores();
+
+    // Frame buffers.
+    void m_InitFrameBuffers();
+    void m_DeInitFrameBuffers();
 };

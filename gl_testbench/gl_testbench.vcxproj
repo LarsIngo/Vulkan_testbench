@@ -155,6 +155,7 @@
     <ClCompile Include="ConstantBuffer.cpp" />
     <ClCompile Include="ConstantBufferGL.cpp" />
     <ClCompile Include="ConstantBufferVK.cpp" />
+    <ClCompile Include="GPUMemoryBlock.cpp" />
     <ClCompile Include="MaterialVK.cpp" />
     <ClCompile Include="RenderStateVK.cpp" />
     <ClCompile Include="ResourceBindingVK.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="ConstantBufferGL.h" />
     <ClInclude Include="ConstantBufferVK.h" />
+    <ClInclude Include="GPUMemoryBlock.h" />
     <ClInclude Include="MaterialVK.h" />
     <ClInclude Include="RenderStateVK.h" />
     <ClInclude Include="ResourceBindingVK.h" />

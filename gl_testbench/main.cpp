@@ -3,6 +3,9 @@
 #include <SDL_events.h>
 #include <type_traits> 
 
+#include <GLFW/glfw3.h>
+#include "VulkanRenderer.h"
+
 #include "Renderer.h"
 #include "Mesh.h"
 #include "Texture2D.h"
@@ -38,18 +41,31 @@ typedef union {
 
 
 void run() {
-
-	SDL_Event windowEvent;
-	while (true)
-	{
-		if (SDL_PollEvent(&windowEvent))
-		{
-			if (windowEvent.type == SDL_QUIT) break;
-			if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE) break;
-		}
-		updateScene();
-		renderScene();
-	}
+    VulkanRenderer* r = dynamic_cast<VulkanRenderer*>(renderer);
+    if (r != nullptr)
+    {
+        while (true)
+        {
+            glfwPollEvents();
+            if (glfwWindowShouldClose(r->m_window)) break;
+            updateScene();
+            renderScene();
+        }
+    }
+    else
+    {
+        SDL_Event windowEvent;
+        while (true)
+        {
+            if (SDL_PollEvent(&windowEvent))
+            {
+                if (windowEvent.type == SDL_QUIT) break;
+                if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE) break;
+            }
+            updateScene();
+            renderScene();
+        }
+    }
 }
 
 /*
