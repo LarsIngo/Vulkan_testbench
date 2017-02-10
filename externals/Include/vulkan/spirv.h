@@ -50,12 +50,12 @@
 
 typedef unsigned int SpvId;
 
-#define SPV_VERSION 0x10000
-#define SPV_REVISION 6
+#define SPV_VERSION 0x10100
+#define SPV_REVISION 4
 
 static const unsigned int SpvMagicNumber = 0x07230203;
-static const unsigned int SpvVersion = 0x00010000;
-static const unsigned int SpvRevision = 6;
+static const unsigned int SpvVersion = 0x00010100;
+static const unsigned int SpvRevision = 4;
 static const unsigned int SpvOpCodeMask = 0xffff;
 static const unsigned int SpvWordCountShift = 16;
 
@@ -125,6 +125,10 @@ typedef enum SpvExecutionMode_ {
     SpvExecutionModeOutputTriangleStrip = 29,
     SpvExecutionModeVecTypeHint = 30,
     SpvExecutionModeContractionOff = 31,
+    SpvExecutionModeInitializer = 33,
+    SpvExecutionModeFinalizer = 34,
+    SpvExecutionModeSubgroupSize = 35,
+    SpvExecutionModeSubgroupsPerWorkgroup = 36,
     SpvExecutionModeMax = 0x7fffffff,
 } SpvExecutionMode;
 
@@ -378,6 +382,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationNoContraction = 42,
     SpvDecorationInputAttachmentIndex = 43,
     SpvDecorationAlignment = 44,
+    SpvDecorationMaxByteOffset = 45,
     SpvDecorationMax = 0x7fffffff,
 } SpvDecoration;
 
@@ -423,6 +428,14 @@ typedef enum SpvBuiltIn_ {
     SpvBuiltInSubgroupLocalInvocationId = 41,
     SpvBuiltInVertexIndex = 42,
     SpvBuiltInInstanceIndex = 43,
+    SpvBuiltInSubgroupEqMaskKHR = 4416,
+    SpvBuiltInSubgroupGeMaskKHR = 4417,
+    SpvBuiltInSubgroupGtMaskKHR = 4418,
+    SpvBuiltInSubgroupLeMaskKHR = 4419,
+    SpvBuiltInSubgroupLtMaskKHR = 4420,
+    SpvBuiltInBaseVertex = 4424,
+    SpvBuiltInBaseInstance = 4425,
+    SpvBuiltInDrawIndex = 4426,
     SpvBuiltInMax = 0x7fffffff,
 } SpvBuiltIn;
 
@@ -441,6 +454,8 @@ typedef enum SpvSelectionControlMask_ {
 typedef enum SpvLoopControlShift_ {
     SpvLoopControlUnrollShift = 0,
     SpvLoopControlDontUnrollShift = 1,
+    SpvLoopControlDependencyInfiniteShift = 2,
+    SpvLoopControlDependencyLengthShift = 3,
     SpvLoopControlMax = 0x7fffffff,
 } SpvLoopControlShift;
 
@@ -448,6 +463,8 @@ typedef enum SpvLoopControlMask_ {
     SpvLoopControlMaskNone = 0,
     SpvLoopControlUnrollMask = 0x00000001,
     SpvLoopControlDontUnrollMask = 0x00000002,
+    SpvLoopControlDependencyInfiniteMask = 0x00000004,
+    SpvLoopControlDependencyLengthMask = 0x00000008,
 } SpvLoopControlMask;
 
 typedef enum SpvFunctionControlShift_ {
@@ -598,6 +615,11 @@ typedef enum SpvCapability_ {
     SpvCapabilityStorageImageReadWithoutFormat = 55,
     SpvCapabilityStorageImageWriteWithoutFormat = 56,
     SpvCapabilityMultiViewport = 57,
+    SpvCapabilitySubgroupDispatch = 58,
+    SpvCapabilityNamedBarrier = 59,
+    SpvCapabilityPipeStorage = 60,
+    SpvCapabilitySubgroupBallotKHR = 4423,
+    SpvCapabilityDrawParameters = 4427,
     SpvCapabilityMax = 0x7fffffff,
 } SpvCapability;
 
@@ -896,6 +918,18 @@ typedef enum SpvOp_ {
     SpvOpAtomicFlagTestAndSet = 318,
     SpvOpAtomicFlagClear = 319,
     SpvOpImageSparseRead = 320,
+    SpvOpSizeOf = 321,
+    SpvOpTypePipeStorage = 322,
+    SpvOpConstantPipeStorage = 323,
+    SpvOpCreatePipeFromPipeStorage = 324,
+    SpvOpGetKernelLocalSizeForSubgroupCount = 325,
+    SpvOpGetKernelMaxNumSubgroups = 326,
+    SpvOpTypeNamedBarrier = 327,
+    SpvOpNamedBarrierInitialize = 328,
+    SpvOpMemoryNamedBarrier = 329,
+    SpvOpModuleProcessed = 330,
+    SpvOpSubgroupBallotKHR = 4421,
+    SpvOpSubgroupFirstInvocationKHR = 4422,
     SpvOpMax = 0x7fffffff,
 } SpvOp;
 

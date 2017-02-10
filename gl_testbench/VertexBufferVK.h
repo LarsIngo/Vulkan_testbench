@@ -14,14 +14,17 @@ class VertexBufferVK : public VertexBuffer
         void bind(size_t offset, size_t size, unsigned int location);
         void unbind();
         size_t getSize();
+        size_t getOffset();
 
     private:
-        size_t totalSize;
+        size_t m_size;
         //GLuint _handle;
+        size_t m_offset;
 
         const VkDevice* m_p_device = nullptr;
         const VkPhysicalDevice* m_p_physical_device = nullptr;
+
         GPUMemoryBlock* m_p_gpu_memory = nullptr;
-        VkBuffer m_vertex_buffer = VK_NULL_HANDLE;
+
 };
 

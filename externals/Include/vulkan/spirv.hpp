@@ -46,12 +46,12 @@ namespace spv {
 
 typedef unsigned int Id;
 
-#define SPV_VERSION 0x10000
-#define SPV_REVISION 6
+#define SPV_VERSION 0x10100
+#define SPV_REVISION 4
 
 static const unsigned int MagicNumber = 0x07230203;
-static const unsigned int Version = 0x00010000;
-static const unsigned int Revision = 6;
+static const unsigned int Version = 0x00010100;
+static const unsigned int Revision = 4;
 static const unsigned int OpCodeMask = 0xffff;
 static const unsigned int WordCountShift = 16;
 
@@ -61,7 +61,6 @@ enum SourceLanguage {
     SourceLanguageGLSL = 2,
     SourceLanguageOpenCL_C = 3,
     SourceLanguageOpenCL_CPP = 4,
-    SourceLanguageHLSL = 5,
     SourceLanguageMax = 0x7fffffff,
 };
 
@@ -122,6 +121,10 @@ enum ExecutionMode {
     ExecutionModeOutputTriangleStrip = 29,
     ExecutionModeVecTypeHint = 30,
     ExecutionModeContractionOff = 31,
+    ExecutionModeInitializer = 33,
+    ExecutionModeFinalizer = 34,
+    ExecutionModeSubgroupSize = 35,
+    ExecutionModeSubgroupsPerWorkgroup = 36,
     ExecutionModeMax = 0x7fffffff,
 };
 
@@ -375,6 +378,7 @@ enum Decoration {
     DecorationNoContraction = 42,
     DecorationInputAttachmentIndex = 43,
     DecorationAlignment = 44,
+    DecorationMaxByteOffset = 45,
     DecorationMax = 0x7fffffff,
 };
 
@@ -420,6 +424,14 @@ enum BuiltIn {
     BuiltInSubgroupLocalInvocationId = 41,
     BuiltInVertexIndex = 42,
     BuiltInInstanceIndex = 43,
+    BuiltInSubgroupEqMaskKHR = 4416,
+    BuiltInSubgroupGeMaskKHR = 4417,
+    BuiltInSubgroupGtMaskKHR = 4418,
+    BuiltInSubgroupLeMaskKHR = 4419,
+    BuiltInSubgroupLtMaskKHR = 4420,
+    BuiltInBaseVertex = 4424,
+    BuiltInBaseInstance = 4425,
+    BuiltInDrawIndex = 4426,
     BuiltInMax = 0x7fffffff,
 };
 
@@ -438,6 +450,8 @@ enum SelectionControlMask {
 enum LoopControlShift {
     LoopControlUnrollShift = 0,
     LoopControlDontUnrollShift = 1,
+    LoopControlDependencyInfiniteShift = 2,
+    LoopControlDependencyLengthShift = 3,
     LoopControlMax = 0x7fffffff,
 };
 
@@ -445,6 +459,8 @@ enum LoopControlMask {
     LoopControlMaskNone = 0,
     LoopControlUnrollMask = 0x00000001,
     LoopControlDontUnrollMask = 0x00000002,
+    LoopControlDependencyInfiniteMask = 0x00000004,
+    LoopControlDependencyLengthMask = 0x00000008,
 };
 
 enum FunctionControlShift {
@@ -595,6 +611,11 @@ enum Capability {
     CapabilityStorageImageReadWithoutFormat = 55,
     CapabilityStorageImageWriteWithoutFormat = 56,
     CapabilityMultiViewport = 57,
+    CapabilitySubgroupDispatch = 58,
+    CapabilityNamedBarrier = 59,
+    CapabilityPipeStorage = 60,
+    CapabilitySubgroupBallotKHR = 4423,
+    CapabilityDrawParameters = 4427,
     CapabilityMax = 0x7fffffff,
 };
 
@@ -893,6 +914,18 @@ enum Op {
     OpAtomicFlagTestAndSet = 318,
     OpAtomicFlagClear = 319,
     OpImageSparseRead = 320,
+    OpSizeOf = 321,
+    OpTypePipeStorage = 322,
+    OpConstantPipeStorage = 323,
+    OpCreatePipeFromPipeStorage = 324,
+    OpGetKernelLocalSizeForSubgroupCount = 325,
+    OpGetKernelMaxNumSubgroups = 326,
+    OpTypeNamedBarrier = 327,
+    OpNamedBarrierInitialize = 328,
+    OpMemoryNamedBarrier = 329,
+    OpModuleProcessed = 330,
+    OpSubgroupBallotKHR = 4421,
+    OpSubgroupFirstInvocationKHR = 4422,
     OpMax = 0x7fffffff,
 };
 
