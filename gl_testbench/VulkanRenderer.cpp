@@ -664,7 +664,7 @@ void VulkanRenderer::m_DeInitGraphicsPipeline()
 
 void VulkanRenderer::m_InitVertexDeviceMemory()
 {
-    m_vertex_memory = new GPUMemoryBlock(m_device, m_gpu, 4096);
+    m_vertex_memory = new GPUMemoryBlock(m_device, m_gpu, 120 * 2000);
 }
 
 void VulkanRenderer::m_DeInitVertexDeviceMemory()
