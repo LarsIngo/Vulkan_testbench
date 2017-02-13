@@ -1,6 +1,6 @@
 #pragma once
 #include "Material.h"
-//#include <GL/glew.h>
+#include <vulkan/vulkan.h>
 #include <vector>
 #include "ConstantBufferVK.h"
 
@@ -42,7 +42,7 @@ class MaterialVK : public Material
     friend VulkanRenderer;
 
     public:
-        MaterialVK();
+        MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_device);
         ~MaterialVK();
 
 
@@ -65,6 +65,7 @@ class MaterialVK : public Material
         //GLuint mapShaderEnum[4];
 
         //std::string shaderNames[4];
+        std::map<ShaderType, VkShaderStageFlagBits> m_shader_stage_bits_map;
 
         //// opengl shader object
         //GLuint shaderObjects[4] = { 0,0,0,0 };
@@ -74,6 +75,15 @@ class MaterialVK : public Material
         //GLuint program;
         int compileShader(ShaderType type, std::string& errString);
         std::vector<std::string> expandShaderText(std::string& shaderText, ShaderType type);
+
+        const VkDevice* m_p_device = nullptr;
+        const VkPhysicalDevice* m_p_physical_device = nullptr;
+        
+        std::map<VkShaderStageFlagBits, VkShaderModule> m_shader_module_map;
+
+        VkRenderPass m_render_pass = VK_NULL_HANDLE;
+        VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
+        VkPipeline m_pipeline = VK_NULL_HANDLE;
 
 };
 

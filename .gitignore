@@ -9,3 +9,5 @@
 *.tlog
 *.iobj
 *.ipdb
+*.enc
+*.suo

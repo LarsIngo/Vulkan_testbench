@@ -115,12 +115,12 @@ private:
 
     std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
     std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
-    VkRenderPass m_render_pass = VK_NULL_HANDLE;
 
-    VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
-    VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;
-    VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
-    VkPipeline m_graphics_pipeline = VK_NULL_HANDLE;
+    //VkRenderPass m_render_pass = VK_NULL_HANDLE;
+    //VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
+    //VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;
+    //VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
+    //VkPipeline m_graphics_pipeline = VK_NULL_HANDLE;
 
     // Meshes to draw.
     std::vector<Mesh*> m_draw_list;
@@ -163,13 +163,17 @@ private:
     void m_InitSwapchainImageViews();
     void m_DeInitSwapchainImageViews();
 
-    // Render pass.
-    void m_InitRenderPass();
-    void m_DeInitRenderPass();
+    //// Render pass.
+    //void m_InitRenderPass();
+    //void m_DeInitRenderPass();
 
-    // Pipeline.
-    void m_InitGraphicsPipeline();
-    void m_DeInitGraphicsPipeline();
+    //// Pipeline.
+    //void m_InitGraphicsPipeline();
+    //void m_DeInitGraphicsPipeline();
+
+    // Frame buffers.
+    //void m_InitFrameBuffers();
+    //void m_DeInitFrameBuffers();
 
     // Allocate device memory.
     void m_InitVertexDeviceMemory();
@@ -182,8 +186,4 @@ private:
     // Semaphores.
     void m_InitSemaphores();
     void m_DeInitSemaphores();
-
-    // Frame buffers.
-    void m_InitFrameBuffers();
-    void m_DeInitFrameBuffers();
 };

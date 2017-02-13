@@ -250,7 +250,8 @@ int initialiseTestbench()
 
 		scene.push_back(m);
 	}
-	return 0;
+
+    return 0;
 }
 
 void shutdown() {

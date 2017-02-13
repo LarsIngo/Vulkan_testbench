@@ -31,8 +31,9 @@ int VulkanRenderer::shutdown()
     m_DeInitSemaphores();
     m_DeInitCommandPool();
     m_DeInitVertexDeviceMemory();
-    m_DeInitGraphicsPipeline();
-    m_DeInitRenderPass();
+    //m_DeInitGraphicsPipeline();
+    //m_DeInitRenderPass();
+    //m_DeInitFrameBuffers();
     m_DeInitSwapchainImageViews();
     m_DeInitSwapchain();
     m_DeInitSurface();
@@ -40,7 +41,6 @@ int VulkanRenderer::shutdown()
     m_DeInitDebug();
     m_DeInitInstance();
     m_DeInitWindow();
-    m_DeInitFrameBuffers();
 
     //SDL_GL_DeleteContext(context);
     //SDL_Quit();
@@ -69,7 +69,7 @@ ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned in
 
 std::string VulkanRenderer::getShaderPath()
 {
-    return std::string("..\\assets\\GL45\\");
+    return std::string("..\\assets\\Vulkan\\");
 }
 
 std::string VulkanRenderer::getShaderExtension()
@@ -84,7 +84,7 @@ VertexBuffer* VulkanRenderer::makeVertexBuffer()
 
 Material* VulkanRenderer::makeMaterial()
 {
-    return (Material*)new MaterialVK();
+    return (Material*)new MaterialVK(m_device, m_gpu);
 }
 
 ResourceBinding* VulkanRenderer::makeResourceBinding()
@@ -143,12 +143,12 @@ int VulkanRenderer::initialize(unsigned int width, unsigned int height)
     m_InitSurface();
     m_InitSwapchain();
     m_InitSwapchainImageViews();
-    m_InitRenderPass();
-    m_InitGraphicsPipeline();
+    //m_InitRenderPass();
+    //m_InitGraphicsPipeline();
+    //m_InitFrameBuffers();
     m_InitVertexDeviceMemory();
     m_InitCommandPool();
     m_InitSemaphores();
-    m_InitFrameBuffers();
 
     return 0;
 }
@@ -205,24 +205,24 @@ void VulkanRenderer::frame()
     // START FRAME.
     VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
 
-    VkRenderPassBeginInfo render_pass_begin_info = {};
-    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = m_render_pass;
-    render_pass_begin_info.framebuffer = m_swapchain_framebuffer_list[m_render_swapchain_image_index];
-    render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = m_swapchain_extent;
-    
-    VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
-    render_pass_begin_info.clearValueCount = 1;
-    render_pass_begin_info.pClearValues = &clear_color;
-    
-    vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
-    
-    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline );
-    
-    //vkCmdDraw(command_buffer, 3, 1, 0, 0 );
-    
-    vkCmdEndRenderPass(command_buffer);
+    //VkRenderPassBeginInfo render_pass_begin_info = {};
+    //render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    //render_pass_begin_info.renderPass = ;
+    //render_pass_begin_info.framebuffer = ;//m_swapchain_framebuffer_list[m_render_swapchain_image_index];
+    //render_pass_begin_info.renderArea.offset = { 0, 0 };
+    //render_pass_begin_info.renderArea.extent = m_swapchain_extent;
+    //
+    //VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
+    //render_pass_begin_info.clearValueCount = 1;
+    //render_pass_begin_info.pClearValues = &clear_color;
+    //
+    //vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
+    //
+    ////vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline );
+    //
+    ////vkCmdDraw(command_buffer, 3, 1, 0, 0 );
+    //
+    //vkCmdEndRenderPass(command_buffer);
 
     vkTools::EndSingleTimeCommand(m_device, m_command_pool, m_graphics_queue, command_buffer);
     // END FRAME.
@@ -627,40 +627,56 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
     }
 }
 
-void VulkanRenderer::m_InitRenderPass()
-{
-    vkTools::CreateRenderPass(m_device, m_surface_format.format, m_render_pass);
-}
+//void VulkanRenderer::m_InitRenderPass()
+//{
+//    vkTools::CreateRenderPass(m_device, m_surface_format.format, m_render_pass);
+//}
+//
+//void VulkanRenderer::m_DeInitRenderPass()
+//{
+//    vkDestroyRenderPass(m_device, m_render_pass, nullptr);
+//    m_render_pass = VK_NULL_HANDLE;
+//}
+//
+//void VulkanRenderer::m_InitGraphicsPipeline()
+//{
+//    vkTools::CreateShaderModule( m_device, "shaders/vert.spv", m_vert_shader_module);
+//    vkTools::CreateShaderModule( m_device, "shaders/frag.spv", m_frag_shader_module);
+//
+//    vkTools::CreatePipelineLayout( m_device, m_pipeline_layout );
+//    
+//    std::vector<VkPipelineShaderStageCreateInfo> shader_stage_list;
+//    shader_stage_list.push_back( vkTools::CreatePipelineShaderStageCreateInfo(m_device, m_vert_shader_module, VK_SHADER_STAGE_VERTEX_BIT, "main" ) );
+//    shader_stage_list.push_back( vkTools::CreatePipelineShaderStageCreateInfo(m_device, m_frag_shader_module, VK_SHADER_STAGE_FRAGMENT_BIT, "main" ) );
+//
+//    std::vector<VkVertexInputAttributeDescription> shader_input_desc_list = Vertex::GetAttributeDescriptions();
+//    VkVertexInputBindingDescription shader_input_bind = Vertex::GetBindingDescription();
+//    vkTools::CreateGraphicsPipeline( m_device, m_swapchain_extent, shader_stage_list, shader_input_desc_list, shader_input_bind, m_render_pass, m_pipeline_layout, m_graphics_pipeline );
+//}
+//
+//void VulkanRenderer::m_DeInitGraphicsPipeline()
+//{
+//    vkDestroyPipelineLayout( m_device, m_pipeline_layout, nullptr );
+//    vkDestroyPipeline( m_device, m_graphics_pipeline, nullptr );
+//    vkDestroyShaderModule( m_device, m_vert_shader_module, nullptr );
+//    vkDestroyShaderModule( m_device, m_frag_shader_module, nullptr );
+//}
 
-void VulkanRenderer::m_DeInitRenderPass()
-{
-    vkDestroyRenderPass(m_device, m_render_pass, nullptr);
-    m_render_pass = VK_NULL_HANDLE;
-}
+//void VulkanRenderer::m_InitFrameBuffers()
+//{
+//    m_swapchain_framebuffer_list.resize(m_swapchain_image_count);
+//    for ( uint32_t i = 0; i < m_swapchain_image_count; ++i )
+//        vkTools::CreateFramebuffer( m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[ i ], m_swapchain_framebuffer_list[ i ] );
+//}
+//
+//void VulkanRenderer::m_DeInitFrameBuffers()
+//{
+//    for ( auto& swapchain_frame_buffer : m_swapchain_framebuffer_list ) {
+//        vkDestroyFramebuffer( m_device, swapchain_frame_buffer, nullptr );
+//        swapchain_frame_buffer = VK_NULL_HANDLE;
+//    }
+//}
 
-void VulkanRenderer::m_InitGraphicsPipeline()
-{
-    vkTools::CreateShaderModule( m_device, "shaders/vert.spv", m_vert_shader_module);
-    vkTools::CreateShaderModule( m_device, "shaders/frag.spv", m_frag_shader_module);
-
-    vkTools::CreatePipelineLayout( m_device, m_pipeline_layout );
-    
-    std::vector<VkPipelineShaderStageCreateInfo> shader_stage_list;
-    shader_stage_list.push_back( vkTools::CreatePipelineShaderStageCreateInfo(m_device, m_vert_shader_module, VK_SHADER_STAGE_VERTEX_BIT, "main" ) );
-    shader_stage_list.push_back( vkTools::CreatePipelineShaderStageCreateInfo(m_device, m_frag_shader_module, VK_SHADER_STAGE_FRAGMENT_BIT, "main" ) );
-
-    std::vector<VkVertexInputAttributeDescription> shader_input_desc_list = Vertex::GetAttributeDescriptions();
-    VkVertexInputBindingDescription shader_input_bind = Vertex::GetBindingDescription();
-    vkTools::CreateGraphicsPipeline( m_device, m_swapchain_extent, shader_stage_list, shader_input_desc_list, shader_input_bind, m_render_pass, m_pipeline_layout, m_graphics_pipeline );
-}
-
-void VulkanRenderer::m_DeInitGraphicsPipeline()
-{
-    vkDestroyPipelineLayout( m_device, m_pipeline_layout, nullptr );
-    vkDestroyPipeline( m_device, m_graphics_pipeline, nullptr );
-    vkDestroyShaderModule( m_device, m_vert_shader_module, nullptr );
-    vkDestroyShaderModule( m_device, m_frag_shader_module, nullptr );
-}
 
 void VulkanRenderer::m_InitVertexDeviceMemory()
 {
@@ -704,19 +720,4 @@ void VulkanRenderer::m_DeInitSemaphores()
     m_render_complete_semaphore = VK_NULL_HANDLE;
     vkDestroySemaphore(m_device, m_present_complete_semaphore, nullptr);
     m_present_complete_semaphore = VK_NULL_HANDLE;
-}
-
-void VulkanRenderer::m_InitFrameBuffers()
-{
-    m_swapchain_framebuffer_list.resize(m_swapchain_image_count);
-    for ( uint32_t i = 0; i < m_swapchain_image_count; ++i )
-        vkTools::CreateFramebuffer( m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[ i ], m_swapchain_framebuffer_list[ i ] );
-}
-
-void VulkanRenderer::m_DeInitFrameBuffers()
-{
-    for ( auto& swapchain_frame_buffer : m_swapchain_framebuffer_list ) {
-        vkDestroyFramebuffer( m_device, swapchain_frame_buffer, nullptr );
-        swapchain_frame_buffer = VK_NULL_HANDLE;
-    }
 }
