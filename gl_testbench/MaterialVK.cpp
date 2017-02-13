@@ -201,19 +201,21 @@ int MaterialVK::compileShader(ShaderType type, std::string& err)
     std::ofstream bfile("CompileSPV.bat");
     assert(bfile.is_open());
     bfile << "glslangValidator.exe -V " << sName << " -o " << "shader.spv" << std::endl;
-    bfile << "pause";
+    bfile << "timeout 5";
     bfile.close();
-    ShellExecute(NULL, L"open", L"CompileSPV.bat", NULL, NULL, SW_SHOWNORMAL);
 
+    ShellExecute(NULL, L"open", L"CompileSPV.bat", NULL, NULL, SW_SHOWNORMAL);
+    Sleep(250);
     // Load spv shader.
     const VkShaderStageFlagBits& stageBit = m_shader_stage_bits_map[type];
     assert(m_shader_module_map.find(stageBit) == m_shader_module_map.end());
+
     vkTools::CreateShaderModule(*m_p_device, "shader.spv", m_shader_module_map[stageBit]);
 
-    std::wstring wsName(sName.begin(), sName.end());
-    DeleteFile(wsName.c_str());
-    DeleteFile(L"shader.spv");
-    DeleteFile(L"CompileSPV.bat");
+    //std::wstring wsName(sName.begin(), sName.end());
+    //DeleteFile(wsName.c_str());
+    //DeleteFile(L"shader.spv");
+    //DeleteFile(L"CompileSPV.bat");
 
     //GLuint newShader = glCreateShader(mapShaderEnum[shaderIdx]);
     //glShaderSource(newShader, shaderLines.size(), tempShaderLines, nullptr);
@@ -269,75 +271,49 @@ int MaterialVK::compileMaterial(std::string& errString)
 
     //CreatePipelineLayout
     {
-        std::vector<VkDescriptorSetLayout> desc_set_layout_list;
+        VkDescriptorSetLayout desc_set_layout;
         {
+            std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
             {
-                std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
-                {
-                    VkDescriptorSetLayoutBinding desc_set_layout_binding;
-                    desc_set_layout_binding.descriptorCount = 1;
-                    desc_set_layout_binding.pImmutableSamplers = nullptr;
+                VkDescriptorSetLayoutBinding desc_set_layout_binding;
+                desc_set_layout_binding.descriptorCount = 1;
+                desc_set_layout_binding.pImmutableSamplers = nullptr;
 
-                    desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-                    desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    desc_set_layout_binding.binding = 0;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                    desc_set_layout_binding.binding = 1;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                    desc_set_layout_binding.binding = 2;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                desc_set_layout_binding.binding = 0;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                desc_set_layout_binding.binding = 1;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                desc_set_layout_binding.binding = 2;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                    desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    desc_set_layout_binding.binding = 5;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                    desc_set_layout_binding.binding = 6;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                }
+                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                desc_set_layout_binding.binding = 5;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                VkDescriptorSetLayoutCreateInfo desc_set_layout_create_info;
-                desc_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                desc_set_layout_create_info.pNext = 0;
-                desc_set_layout_create_info.flags = 0;
-                desc_set_layout_create_info.bindingCount = desc_set_layout_binding_list.size();
-                desc_set_layout_create_info.pBindings = desc_set_layout_binding_list.data();
-
-                VkDescriptorSetLayout desc_set_layout;
-                vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
-                desc_set_layout_list.push_back(desc_set_layout);
+                desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+                desc_set_layout_binding.binding = 6;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
             }
-            {
-                std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
-                {
-                    VkDescriptorSetLayoutBinding desc_set_layout_binding;
-                    desc_set_layout_binding.descriptorCount = 1;
-                    desc_set_layout_binding.pImmutableSamplers = nullptr;
 
-                    desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    desc_set_layout_binding.binding = 6;
-                    desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                }
+            VkDescriptorSetLayoutCreateInfo desc_set_layout_create_info;
+            desc_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            desc_set_layout_create_info.pNext = 0;
+            desc_set_layout_create_info.flags = 0;
+            desc_set_layout_create_info.bindingCount = desc_set_layout_binding_list.size();
+            desc_set_layout_create_info.pBindings = desc_set_layout_binding_list.data();
 
-                VkDescriptorSetLayoutCreateInfo desc_set_layout_create_info;
-                desc_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                desc_set_layout_create_info.pNext = 0;
-                desc_set_layout_create_info.flags = 0;
-                desc_set_layout_create_info.bindingCount = desc_set_layout_binding_list.size();
-                desc_set_layout_create_info.pBindings = desc_set_layout_binding_list.data();
 
-                VkDescriptorSetLayout desc_set_layout;
-                vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
-                desc_set_layout_list.push_back(desc_set_layout);
-            }
+            vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
         }
 
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = desc_set_layout_list.size();
-        pipelineLayoutInfo.pSetLayouts = desc_set_layout_list.data();
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &desc_set_layout;
         pipelineLayoutInfo.pushConstantRangeCount = 0;
-        //pipelineLayoutInfo.pPushConstantRanges = 
 
         vkTools::VkErrorCheck(vkCreatePipelineLayout(*m_p_device, &pipelineLayoutInfo, nullptr, &m_pipeline_layout));
     }
