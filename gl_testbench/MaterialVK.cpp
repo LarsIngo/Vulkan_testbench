@@ -10,6 +10,8 @@
 #include "MaterialVK.h"
 #include "vkTools.hpp"
 
+#include "IA.h"
+
 typedef unsigned int uint;
 
 
@@ -201,7 +203,7 @@ int MaterialVK::compileShader(ShaderType type, std::string& err)
     std::ofstream bfile("CompileSPV.bat");
     assert(bfile.is_open());
     bfile << "glslangValidator.exe -V " << sName << " -o " << "shader.spv" << std::endl;
-    bfile << "timeout 5";
+    bfile << "timeout 3";
     bfile.close();
 
     ShellExecute(NULL, L"open", L"CompileSPV.bat", NULL, NULL, SW_SHOWNORMAL);
@@ -281,20 +283,26 @@ int MaterialVK::compileMaterial(std::string& errString)
 
                 desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
                 desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                desc_set_layout_binding.binding = 0;
+                desc_set_layout_binding.binding = POSITION;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                desc_set_layout_binding.binding = 1;
+                desc_set_layout_binding.binding = NORMAL;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-                desc_set_layout_binding.binding = 2;
+                desc_set_layout_binding.binding = TEXTCOORD;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
                 desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                desc_set_layout_binding.binding = 5;
+                desc_set_layout_binding.binding = TRANSLATION;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
                 desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-                desc_set_layout_binding.binding = 6;
+                desc_set_layout_binding.binding = DIFFUSE_TINT;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+
+                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                desc_set_layout_binding.stageFlags =  VK_SHADER_STAGE_FRAGMENT_BIT;
+                desc_set_layout_binding.binding = DIFFUSE_SLOT;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+
             }
 
             VkDescriptorSetLayoutCreateInfo desc_set_layout_create_info;
@@ -303,7 +311,6 @@ int MaterialVK::compileMaterial(std::string& errString)
             desc_set_layout_create_info.flags = 0;
             desc_set_layout_create_info.bindingCount = desc_set_layout_binding_list.size();
             desc_set_layout_create_info.pBindings = desc_set_layout_binding_list.data();
-
 
             vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
         }

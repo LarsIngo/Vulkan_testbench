@@ -103,7 +103,7 @@ private:
     std::vector<VkImage> m_swapchain_image_list;
     std::vector<VkImageView> m_swapchain_image_view_list;
 
-    GPUMemoryBlock* m_vertex_memory;
+    GPUMemoryBlock* m_vertex_position_memory;
 
     VkCommandPool m_command_pool = VK_NULL_HANDLE;
     VkQueue m_graphics_queue = VK_NULL_HANDLE;
@@ -176,8 +176,8 @@ private:
     //void m_DeInitFrameBuffers();
 
     // Allocate device memory.
-    void m_InitVertexDeviceMemory();
-    void m_DeInitVertexDeviceMemory();
+    void m_InitDeviceMemory();
+    void m_DeInitDeviceMemory();
 
     // Command pool.
     void m_InitCommandPool();

@@ -1,12 +1,13 @@
 #include "ConstantBufferVK.h"
 #include "MaterialVK.h"
+#include <assert.h>
 
 ConstantBufferVK::ConstantBufferVK(std::string NAME, unsigned int location)
 {
     //name = NAME;
     //handle = 0;
     //// make a CPU side buffer.
-    //// binding point (between BUFFER AND SHADER PROGRAM)
+    // binding point (between BUFFER AND SHADER PROGRAM)
     //this->location = location;
     //// location of buffer definition in SHADER PROGRAM
     //index = GL_MAX_UNIFORM_LOCATIONS;
@@ -25,6 +26,7 @@ ConstantBufferVK::~ConstantBufferVK()
 // this allows us to not know in advance the type of the receiving end, vec3, vec4, etc.
 void ConstantBufferVK::setData(const void* data, size_t size, Material* m, unsigned int location)
 {
+    assert(this->location == location);
     //if (handle == 0)
     //{
     //    glGenBuffers(1, &handle);

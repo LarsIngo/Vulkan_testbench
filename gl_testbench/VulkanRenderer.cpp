@@ -30,7 +30,7 @@ int VulkanRenderer::shutdown()
 {
     m_DeInitSemaphores();
     m_DeInitCommandPool();
-    m_DeInitVertexDeviceMemory();
+    m_DeInitDeviceMemory();
     //m_DeInitGraphicsPipeline();
     //m_DeInitRenderPass();
     //m_DeInitFrameBuffers();
@@ -79,7 +79,7 @@ std::string VulkanRenderer::getShaderExtension()
 
 VertexBuffer* VulkanRenderer::makeVertexBuffer()
 {
-    return (VertexBuffer*)new VertexBufferVK(m_device, m_gpu, m_vertex_memory);
+    return (VertexBuffer*)new VertexBufferVK(m_device, m_gpu, m_vertex_position_memory);
 };
 
 Material* VulkanRenderer::makeMaterial()
@@ -146,7 +146,7 @@ int VulkanRenderer::initialize(unsigned int width, unsigned int height)
     //m_InitRenderPass();
     //m_InitGraphicsPipeline();
     //m_InitFrameBuffers();
-    m_InitVertexDeviceMemory();
+    m_InitDeviceMemory();
     m_InitCommandPool();
     m_InitSemaphores();
 
@@ -551,7 +551,7 @@ void VulkanRenderer::m_InitSwapchain()
     swapchain_create_info.imageExtent.width = m_swapchain_extent.width;
     swapchain_create_info.imageExtent.height = m_swapchain_extent.height;
     swapchain_create_info.imageArrayLayers = 1;
-    swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;// VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // VK_IMAGE_USAGE_TRANSFER_DST_BIT when only copy and not render to swapchain image
+    swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;// VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // VK_IMAGE_USAGE_TRANSFER_DST_BIT when only copy and not render to swapchain image
 
     uint32_t queue_family_indices[] = { m_graphics_family_index, m_present_family_index };
     if (m_present_family_index != m_graphics_family_index) {
@@ -678,14 +678,14 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
 //}
 
 
-void VulkanRenderer::m_InitVertexDeviceMemory()
+void VulkanRenderer::m_InitDeviceMemory()
 {
-    m_vertex_memory = new GPUMemoryBlock(m_device, m_gpu, 120 * 2000);
+    m_vertex_position_memory = new GPUMemoryBlock(m_device, m_gpu, 120 * 2000, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-void VulkanRenderer::m_DeInitVertexDeviceMemory()
+void VulkanRenderer::m_DeInitDeviceMemory()
 {
-    delete m_vertex_memory;
+    delete m_vertex_position_memory;
 }
 
 void VulkanRenderer::m_InitCommandPool()
