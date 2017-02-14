@@ -84,7 +84,7 @@ std::string VulkanRenderer::getShaderExtension()
 
 VertexBuffer* VulkanRenderer::makeVertexBuffer()
 {
-    return (VertexBuffer*)new VertexBufferVK(m_device, m_gpu, m_vertex_position_memory);
+    return (VertexBuffer*)new VertexBufferVK(m_device, m_gpu);
 };
 
 Material* VulkanRenderer::makeMaterial()

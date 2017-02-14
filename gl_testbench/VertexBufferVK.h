@@ -8,7 +8,7 @@
 class VertexBufferVK : public VertexBuffer
 {
     public:
-        VertexBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device, GPUMemoryBlock* gpu_memory);
+        VertexBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device);
         ~VertexBufferVK();
 
         void setData(const void* data, size_t size, DATA_USAGE usage);
@@ -16,6 +16,8 @@ class VertexBufferVK : public VertexBuffer
         void unbind();
         size_t getSize();
         size_t getOffset();
+
+        void Reset();
 
     private:
         size_t m_size = 0;
@@ -25,7 +27,7 @@ class VertexBufferVK : public VertexBuffer
         const VkDevice* m_p_device = nullptr;
         const VkPhysicalDevice* m_p_physical_device = nullptr;
 
-        GPUMemoryBlock* m_p_gpu_memory = nullptr;
-        //static std::map<std::size_t, GPUMemoryBlock*> m_s_gpu_memory;
+        static std::map<std::size_t, GPUMemoryBlock*> m_s_gpu_memory_map;
+        const void* m_last_data;
 };
 
