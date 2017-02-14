@@ -2,8 +2,13 @@
 #include "MaterialVK.h"
 #include <assert.h>
 
-ConstantBufferVK::ConstantBufferVK(std::string NAME, unsigned int location)
+ConstantBufferVK::ConstantBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device)
 {
+    m_p_device = &device;
+    m_p_physical_device = &physical_device;
+
+    m_gpu_memory = new GPUMemoryBlock(device, physical_device, 4096, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
     //name = NAME;
     //handle = 0;
     //// make a CPU side buffer.
@@ -21,12 +26,23 @@ ConstantBufferVK::~ConstantBufferVK()
     //    glDeleteBuffers(1, &handle);
     //    handle = 0;
     //};
+    delete m_gpu_memory;
 }
 
 // this allows us to not know in advance the type of the receiving end, vec3, vec4, etc.
 void ConstantBufferVK::setData(const void* data, size_t size, Material* m, unsigned int location)
 {
-    assert(this->location == location);
+
+    std::size_t offset = m_gpu_memory->Allocate(size);
+
+    // delete if memory exists
+    //if (_handle > 0) {
+    //    glDeleteBuffers(1, &_handle);
+    //}
+
+    m_gpu_memory->Update(data, size, offset);
+
+    //assert(this->location == location);
     //if (handle == 0)
     //{
     //    glGenBuffers(1, &handle);
@@ -83,3 +99,8 @@ void ConstantBufferVK::bind(Material* m)
 //}
 //*/
 //
+
+void ConstantBufferVK::Reset()
+{
+    m_gpu_memory->Reset();
+}

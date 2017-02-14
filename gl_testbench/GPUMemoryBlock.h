@@ -12,7 +12,12 @@ class GPUMemoryBlock
         VkDeviceMemory m_device_memory = VK_NULL_HANDLE;
         VkBuffer m_buffer = VK_NULL_HANDLE;
 
-        size_t Allocate(const void* inData, std::size_t size);
+        size_t Allocate(std::size_t size);
+
+        void Update(const void* inData, std::size_t size, std::size_t offset);
+
+        void Reset();
+
     private:
         std::size_t m_total_size;
         std::size_t m_offset;

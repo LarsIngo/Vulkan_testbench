@@ -40,14 +40,24 @@ GPUMemoryBlock::~GPUMemoryBlock()
     m_device_memory = VK_NULL_HANDLE;
 }
 
-size_t GPUMemoryBlock::Allocate(const void* inData, size_t size)
+size_t GPUMemoryBlock::Allocate(size_t size)
 {
     size_t offset = m_offset;
+    assert(size + offset <= m_total_size);
+    m_offset += size;
+    return offset;
+}
+
+void GPUMemoryBlock::Update(const void* inData, std::size_t size, std::size_t offset)
+{
     assert(size + offset <= m_total_size);
     void* data;
     vkMapMemory(*m_p_device, m_device_memory, m_offset, size, 0, &data);
     memcpy(data, inData, (size_t)size);
     vkUnmapMemory(*m_p_device, m_device_memory);
-    m_offset += size;
-    return offset;
+}
+
+void GPUMemoryBlock::Reset()
+{
+    m_offset = 0;
 }

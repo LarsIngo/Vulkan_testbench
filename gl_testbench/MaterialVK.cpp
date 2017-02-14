@@ -60,6 +60,8 @@ MaterialVK::MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_
     m_p_device = &device;
     m_p_physical_device = &physical_device;
 
+    //m_p_gpu_memory_block = gpu_memory_block;
+
     m_shader_stage_bits_map[Material::ShaderType::VS] = VK_SHADER_STAGE_VERTEX_BIT;
     m_shader_stage_bits_map[Material::ShaderType::PS] = VK_SHADER_STAGE_FRAGMENT_BIT;
     m_shader_stage_bits_map[Material::ShaderType::GS] = VK_SHADER_STAGE_GEOMETRY_BIT;
@@ -114,7 +116,9 @@ void MaterialVK::setShader(const std::string& shaderFileName, ShaderType type)
 // this constant buffer will be bound every time we bind the material
 void MaterialVK::addConstantBuffer(std::string name, unsigned int location)
 {
-    constantBuffers[location] = new ConstantBufferVK(name, location);
+    //assert(m_constant_memory_map.find(name) == m_constant_memory_map.end());
+    //m_constant_memory_map[name] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 4096, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    constantBuffers[location] = new ConstantBufferVK(*m_p_device, *m_p_physical_device);
 }
 
 // location identifies the constant buffer in a unique way
@@ -443,3 +447,9 @@ void MaterialVK::disable() {
 //{
 //	return 0;
 //}
+
+void MaterialVK::Reset()
+{
+    for (auto& it : constantBuffers)
+        it.second->Reset();
+}

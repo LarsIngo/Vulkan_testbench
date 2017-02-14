@@ -19,13 +19,19 @@ VertexBufferVK::~VertexBufferVK()
 
 void VertexBufferVK::setData(const void* inData, size_t size, DATA_USAGE usage)
 {
-    m_size = size;
+    if (m_size == 0)
+    {
+        m_offset = m_p_gpu_memory->Allocate(size);
+        m_size = size;
+    }
     // delete if memory exists
     //if (_handle > 0) {
     //    glDeleteBuffers(1, &_handle);
     //}
 
-    m_offset = m_p_gpu_memory->Allocate(inData, size);
+    assert(m_size == size);
+    m_p_gpu_memory->Update(inData, size, m_offset);
+
     //GLuint newSSBO;
     //glGenBuffers(1, &newSSBO);
     //glBindBuffer(GL_SHADER_STORAGE_BUFFER, newSSBO);

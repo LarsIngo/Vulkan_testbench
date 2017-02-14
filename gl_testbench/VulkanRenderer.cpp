@@ -64,7 +64,12 @@ Sampler2D* VulkanRenderer::makeSampler2D()
 
 ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned int location)
 {
-    return (ConstantBuffer*)new ConstantBufferVK(NAME, location);
+    if (m_constant_buffer_map.find(NAME) == m_constant_buffer_map.end())
+    {
+        m_constant_buffer_map[NAME] = new ConstantBufferVK(m_device, m_gpu);
+    }
+
+    return m_constant_buffer_map[NAME];
 }
 
 std::string VulkanRenderer::getShaderPath()
@@ -84,7 +89,9 @@ VertexBuffer* VulkanRenderer::makeVertexBuffer()
 
 Material* VulkanRenderer::makeMaterial()
 {
-    return (Material*)new MaterialVK(m_device, m_gpu);
+    MaterialVK* mat = new MaterialVK(m_device, m_gpu);
+    m_material_list.push_back(mat);
+    return (Material*)mat;
 }
 
 ResourceBinding* VulkanRenderer::makeResourceBinding()
@@ -235,6 +242,14 @@ void VulkanRenderer::frame()
         submit_info.pSignalSemaphores = signal_semaphores;
     }
     vkTools::VkErrorCheck(vkQueueSubmit(m_graphics_queue, 1, &submit_info, VK_NULL_HANDLE));
+
+
+    // RESET DEVICE BUFFERS.
+    for (auto& it : m_material_list)
+        it->Reset();
+
+    for (auto& it : m_constant_buffer_map)
+        it.second->Reset();
 }
 
 
@@ -686,6 +701,9 @@ void VulkanRenderer::m_InitDeviceMemory()
 void VulkanRenderer::m_DeInitDeviceMemory()
 {
     delete m_vertex_position_memory;
+
+    for (auto& it : m_constant_buffer_map)
+        delete it.second;
 }
 
 void VulkanRenderer::m_InitCommandPool()

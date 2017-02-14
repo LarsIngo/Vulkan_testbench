@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include "ConstantBufferVK.h"
+#include "GPUMemoryBlock.h"
 
 class VulkanRenderer;
 
@@ -58,11 +59,14 @@ class MaterialVK : public Material
         void updateConstantBuffer(const void* data, size_t size, unsigned int location);
         // slower version using a string
         void addConstantBuffer(std::string name, unsigned int location);
-        std::map<unsigned int, ConstantBufferVK*> constantBuffers;
+
+        void Reset();
 
     private:
         //// map from ShaderType to GL_VERTEX_SHADER, should be static.
         //GLuint mapShaderEnum[4];
+
+        std::map<unsigned int, ConstantBufferVK*> constantBuffers;
 
         //std::string shaderNames[4];
         std::map<ShaderType, VkShaderStageFlagBits> m_shader_stage_bits_map;
@@ -78,7 +82,9 @@ class MaterialVK : public Material
 
         const VkDevice* m_p_device = nullptr;
         const VkPhysicalDevice* m_p_physical_device = nullptr;
-        
+
+        std::map<std::string, GPUMemoryBlock*> m_constant_memory_map;
+
         std::map<VkShaderStageFlagBits, VkShaderModule> m_shader_module_map;
 
         VkRenderPass m_render_pass = VK_NULL_HANDLE;

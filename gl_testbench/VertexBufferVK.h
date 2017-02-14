@@ -3,6 +3,7 @@
 #include "VertexBuffer.h"
 #include <vulkan/vulkan.h>
 #include "GPUMemoryBlock.h"
+#include <map>
 
 class VertexBufferVK : public VertexBuffer
 {
@@ -17,7 +18,7 @@ class VertexBufferVK : public VertexBuffer
         size_t getOffset();
 
     private:
-        size_t m_size;
+        size_t m_size = 0;
         //GLuint _handle;
         size_t m_offset;
 
@@ -25,6 +26,6 @@ class VertexBufferVK : public VertexBuffer
         const VkPhysicalDevice* m_p_physical_device = nullptr;
 
         GPUMemoryBlock* m_p_gpu_memory = nullptr;
-
+        //static std::map<std::size_t, GPUMemoryBlock*> m_s_gpu_memory;
 };
 

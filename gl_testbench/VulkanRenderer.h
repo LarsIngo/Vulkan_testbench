@@ -3,7 +3,8 @@
 #include "Renderer.h"
 #include <vector>
 #include <glm/glm.hpp>
-#include "GPUMemoryBlock.h"
+#include "ConstantBufferVK.h"
+#include "MaterialVK.h"
 
 #define BUILD_ENABLE_VULKAN_DEBUG 1
 #include <vulkan/vulkan.h>
@@ -104,6 +105,9 @@ private:
     std::vector<VkImageView> m_swapchain_image_view_list;
 
     GPUMemoryBlock* m_vertex_position_memory;
+
+    std::map<std::string, ConstantBufferVK*> m_constant_buffer_map;
+    std::vector<MaterialVK*> m_material_list;
 
     VkCommandPool m_command_pool = VK_NULL_HANDLE;
     VkQueue m_graphics_queue = VK_NULL_HANDLE;
