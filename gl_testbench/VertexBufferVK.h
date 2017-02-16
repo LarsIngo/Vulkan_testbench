@@ -18,6 +18,7 @@ class VertexBufferVK : public VertexBuffer
         size_t getOffset();
 
         void Reset();
+        void Clear();
 
     private:
         size_t m_size = 0;

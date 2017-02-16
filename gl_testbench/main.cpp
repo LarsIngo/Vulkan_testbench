@@ -191,7 +191,7 @@ int initialiseTestbench()
 		
 		materials.push_back(m);
 	}
-	// basic technique
+	//// basic technique
 	techniques.push_back(new Technique());
 	techniques.push_back(new Technique());
 	techniques.push_back(new Technique());

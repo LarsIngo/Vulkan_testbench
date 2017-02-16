@@ -7,7 +7,7 @@
 	layout (location = TEXTCOORD ) in vec2 uv_in;
 #endif
 
-out vec4 fragment_color;
+layout(location = 0) out vec4 fragment_color;
 
 layout(binding=DIFFUSE_TINT) uniform DIFFUSE_TINT_NAME
 {

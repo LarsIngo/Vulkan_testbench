@@ -21,6 +21,8 @@ layout(binding=DIFFUSE_TINT) uniform DIFFUSE_TINT_NAME
 	vec4 diffuseTint;
 };
 
+layout(location=8) out vec4 debug_out;
+
 void main() {
     uint vID = gl_VertexIndex;
     
@@ -32,5 +34,8 @@ void main() {
 		uv_out = uv_in[vID];
 	#endif
 
-    gl_Position = position_in[vID] + translate;
+    debug_out = position_in[vID];
+    
+    gl_Position = vec4(vID == 2, vID == 0, 1, 1);
+    //gl_Position = position_in[vID];// + translate;
 }

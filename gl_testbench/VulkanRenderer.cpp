@@ -28,6 +28,8 @@ VulkanRenderer::~VulkanRenderer()
 
 int VulkanRenderer::shutdown()
 {
+    vkDeviceWaitIdle(m_device);
+
     m_DeInitSemaphores();
     m_DeInitCommandPool();
     m_DeInitDeviceMemory();
@@ -66,7 +68,7 @@ ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned in
 {
     if (m_constant_buffer_map.find(NAME) == m_constant_buffer_map.end())
     {
-        m_constant_buffer_map[NAME] = new ConstantBufferVK(m_device, m_gpu);
+        m_constant_buffer_map[NAME] = new ConstantBufferVK(m_device, m_gpu, 16 * 2001);
     }
 
     return m_constant_buffer_map[NAME];
@@ -84,7 +86,9 @@ std::string VulkanRenderer::getShaderExtension()
 
 VertexBuffer* VulkanRenderer::makeVertexBuffer()
 {
-    return (VertexBuffer*)new VertexBufferVK(m_device, m_gpu);
+    VertexBufferVK* buff = new VertexBufferVK(m_device, m_gpu);
+    m_vertex_buffer_list.push_back(buff);
+    return (VertexBuffer*)buff;
 };
 
 Material* VulkanRenderer::makeMaterial()
@@ -207,32 +211,46 @@ void VulkanRenderer::frame()
 
     // GET NEXT IMAGE FROM SWAPCHAIN.
     vkTools::VkErrorCheck(vkAcquireNextImageKHR(m_device, m_swapchain, (std::numeric_limits<uint64_t>::max)(), m_present_complete_semaphore, VK_NULL_HANDLE, &m_render_swapchain_image_index));
-
+    assert(m_render_swapchain_image_index <= m_swapchain_image_view_list.size());
+    VkFramebuffer swapchain_frameBuffer = VK_NULL_HANDLE;
 
     // START FRAME.
     VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
 
-    //VkRenderPassBeginInfo render_pass_begin_info = {};
-    //render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    //render_pass_begin_info.renderPass = ;
-    //render_pass_begin_info.framebuffer = ;//m_swapchain_framebuffer_list[m_render_swapchain_image_index];
-    //render_pass_begin_info.renderArea.offset = { 0, 0 };
-    //render_pass_begin_info.renderArea.extent = m_swapchain_extent;
-    //
-    //VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
-    //render_pass_begin_info.clearValueCount = 1;
-    //render_pass_begin_info.pClearValues = &clear_color;
-    //
-    //vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
-    //
-    ////vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline );
-    //
-    ////vkCmdDraw(command_buffer, 3, 1, 0, 0 );
-    //
-    //vkCmdEndRenderPass(command_buffer);
+    for (auto mesh : m_draw_list)
+    {
+        Technique* t = mesh->technique;
+        MaterialVK* m = (MaterialVK*)t->material;
+
+        vkTools::CreateFramebuffer(m_device, m_swapchain_extent, m->m_render_pass, m_swapchain_image_view_list[m_render_swapchain_image_index], swapchain_frameBuffer);
+
+        VkRenderPassBeginInfo render_pass_begin_info = {};
+        render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        render_pass_begin_info.renderPass = m->m_render_pass;
+        render_pass_begin_info.framebuffer = swapchain_frameBuffer;
+        render_pass_begin_info.renderArea.offset = { 0, 0 };
+        render_pass_begin_info.renderArea.extent = m_swapchain_extent;
+
+        VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
+        render_pass_begin_info.clearValueCount = 1;
+        render_pass_begin_info.pClearValues = &clear_color;
+
+        vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
+        
+        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline );
+        
+        vkCmdDraw(command_buffer, 3, 1, 0, 0 );
+        
+        vkCmdEndRenderPass(command_buffer);
+
+        break;
+    }
+
 
     vkTools::EndSingleTimeCommand(m_device, m_command_pool, m_graphics_queue, command_buffer);
     // END FRAME.
+
+    vkDestroyFramebuffer(m_device, swapchain_frameBuffer, nullptr);
 
     VkSubmitInfo submit_info = {};
     {
@@ -695,12 +713,13 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
 
 void VulkanRenderer::m_InitDeviceMemory()
 {
-    m_vertex_position_memory = new GPUMemoryBlock(m_device, m_gpu, 120 * 2000, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
 }
 
 void VulkanRenderer::m_DeInitDeviceMemory()
 {
-    delete m_vertex_position_memory;
+    for (auto& it : m_vertex_buffer_list)
+        it->Clear();
 
     for (auto& it : m_constant_buffer_map)
         delete it.second;

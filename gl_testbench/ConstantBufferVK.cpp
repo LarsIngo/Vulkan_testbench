@@ -2,12 +2,13 @@
 #include "MaterialVK.h"
 #include <assert.h>
 
-ConstantBufferVK::ConstantBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device)
+ConstantBufferVK::ConstantBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size)
 {
     m_p_device = &device;
     m_p_physical_device = &physical_device;
 
-    m_gpu_memory = new GPUMemoryBlock(device, physical_device, 4096, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_gpu_memory = new GPUMemoryBlock(device, physical_device, total_size, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_total_size = total_size;
 
     //name = NAME;
     //handle = 0;
@@ -35,6 +36,8 @@ void ConstantBufferVK::setData(const void* data, size_t size, Material* m, unsig
 
     std::size_t offset = m_gpu_memory->Allocate(size);
 
+    assert(offset + size <= m_total_size);
+    
     // delete if memory exists
     //if (_handle > 0) {
     //    glDeleteBuffers(1, &_handle);

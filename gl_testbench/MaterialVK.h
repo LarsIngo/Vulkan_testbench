@@ -88,6 +88,7 @@ class MaterialVK : public Material
         std::map<VkShaderStageFlagBits, VkShaderModule> m_shader_module_map;
 
         VkRenderPass m_render_pass = VK_NULL_HANDLE;
+        VkDescriptorSetLayout m_desc_set_layout = VK_NULL_HANDLE;
         VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
         VkPipeline m_pipeline = VK_NULL_HANDLE;
 

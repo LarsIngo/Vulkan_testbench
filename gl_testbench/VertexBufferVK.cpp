@@ -16,9 +16,10 @@ VertexBufferVK::VertexBufferVK(const VkDevice& device, const VkPhysicalDevice& p
 VertexBufferVK::~VertexBufferVK()
 {
     //glDeleteBuffers(1, &_handle);
+    
+    assert(m_s_gpu_memory_map.size() == 0);
 
-    for (auto& it : m_s_gpu_memory_map)
-        delete it.second;
+    //m_s_gpu_memory_map.clear();
 }
 
 void VertexBufferVK::setData(const void* inData, size_t size, DATA_USAGE usage)
@@ -49,7 +50,7 @@ void VertexBufferVK::bind(size_t offset, size_t size, unsigned int location) {
     //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, location, _handle, offset, size);
 
     if (m_s_gpu_memory_map.find(location) == m_s_gpu_memory_map.end())
-        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 2000 * 48 * 10, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 2001 * 48, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
     std::size_t bufferOffset = m_s_gpu_memory_map[location]->Allocate(size);
     m_s_gpu_memory_map[location]->Update(m_last_data, size, bufferOffset);
@@ -71,4 +72,11 @@ void VertexBufferVK::Reset()
 {
     for (auto& it : m_s_gpu_memory_map)
         it.second->Reset();
+}
+
+void VertexBufferVK::Clear()
+{
+    for (auto& it : m_s_gpu_memory_map)
+        delete it.second;
+    m_s_gpu_memory_map.clear();
 }

@@ -91,10 +91,16 @@ MaterialVK::~MaterialVK()
     for (auto& it : m_shader_module_map)
         vkDestroyShaderModule(*m_p_device, it.second, nullptr);
 
-    vkDestroyRenderPass(*m_p_device, m_render_pass, nullptr);
+    for (auto& it : constantBuffers)
+        delete it.second;
 
-    vkDestroyPipelineLayout(*m_p_device, m_pipeline_layout, nullptr);
-    //vkDestroyPipeline(*m_p_device, m_pipeline, nullptr);
+    if (m_render_pass != VK_NULL_HANDLE) vkDestroyRenderPass(*m_p_device, m_render_pass, nullptr);
+
+    if (m_pipeline_layout != VK_NULL_HANDLE) vkDestroyPipelineLayout(*m_p_device, m_pipeline_layout, nullptr);
+    
+    if (m_pipeline != VK_NULL_HANDLE) vkDestroyPipeline(*m_p_device, m_pipeline, nullptr);
+    
+    if (m_desc_set_layout != VK_NULL_HANDLE) vkDestroyDescriptorSetLayout(*m_p_device, m_desc_set_layout, nullptr);
         
 };
 
@@ -118,7 +124,7 @@ void MaterialVK::addConstantBuffer(std::string name, unsigned int location)
 {
     //assert(m_constant_memory_map.find(name) == m_constant_memory_map.end());
     //m_constant_memory_map[name] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 4096, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-    constantBuffers[location] = new ConstantBufferVK(*m_p_device, *m_p_physical_device);
+    constantBuffers[location] = new ConstantBufferVK(*m_p_device, *m_p_physical_device, 16 * 2000);
 }
 
 // location identifies the constant buffer in a unique way
@@ -272,12 +278,11 @@ int MaterialVK::compileMaterial(std::string& errString)
     //INFO_OUT(program, Program);
     //COMPILE_LOG(program, Program, err2);
 
-    VkFormat tmpFormat = VK_FORMAT_R8G8B8_UNORM;
+    VkFormat tmpFormat = VK_FORMAT_B8G8R8A8_UNORM;
     vkTools::CreateRenderPass(*m_p_device, tmpFormat, m_render_pass);
 
     //CreatePipelineLayout
     {
-        VkDescriptorSetLayout desc_set_layout;
         {
             std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
             {
@@ -316,14 +321,14 @@ int MaterialVK::compileMaterial(std::string& errString)
             desc_set_layout_create_info.bindingCount = desc_set_layout_binding_list.size();
             desc_set_layout_create_info.pBindings = desc_set_layout_binding_list.data();
 
-            vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
+            vkCreateDescriptorSetLayout(*m_p_device, &desc_set_layout_create_info, nullptr, &m_desc_set_layout);
         }
 
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &desc_set_layout;
+        pipelineLayoutInfo.pSetLayouts = &m_desc_set_layout;
         pipelineLayoutInfo.pushConstantRangeCount = 0;
 
         vkTools::VkErrorCheck(vkCreatePipelineLayout(*m_p_device, &pipelineLayoutInfo, nullptr, &m_pipeline_layout));

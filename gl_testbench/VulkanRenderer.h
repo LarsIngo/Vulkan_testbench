@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include "ConstantBufferVK.h"
 #include "MaterialVK.h"
+#include "VertexBufferVK.h"
 
 #define BUILD_ENABLE_VULKAN_DEBUG 1
 #include <vulkan/vulkan.h>
@@ -104,7 +105,7 @@ private:
     std::vector<VkImage> m_swapchain_image_list;
     std::vector<VkImageView> m_swapchain_image_view_list;
 
-    GPUMemoryBlock* m_vertex_position_memory;
+    std::vector<VertexBufferVK*> m_vertex_buffer_list;
 
     std::map<std::string, ConstantBufferVK*> m_constant_buffer_map;
     std::vector<MaterialVK*> m_material_list;
@@ -116,9 +117,8 @@ private:
     VkSemaphore m_present_complete_semaphore = VK_NULL_HANDLE;
     VkSemaphore m_render_complete_semaphore = VK_NULL_HANDLE;
     uint32_t m_render_swapchain_image_index = 0;
-
-    std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
-    std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
+    //std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
+    //std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
 
     //VkRenderPass m_render_pass = VK_NULL_HANDLE;
     //VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
