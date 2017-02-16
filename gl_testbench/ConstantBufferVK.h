@@ -11,11 +11,14 @@ class ConstantBufferVK : public ConstantBuffer
         void setData(const void* data, size_t size, Material* m, unsigned int location);
         void bind(Material*);
 
-        std::size_t m_total_size;
         void Reset();
 
-    private:
+        std::size_t GetTotalSize();
+        std::size_t GetOffset();
+        VkBuffer* GetBuffer();
 
+    private:
+        std::size_t m_total_size;
         //std::string name;
         //uint32_t location;
         //GLuint location;

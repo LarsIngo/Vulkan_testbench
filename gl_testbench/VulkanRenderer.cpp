@@ -66,12 +66,12 @@ Sampler2D* VulkanRenderer::makeSampler2D()
 
 ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned int location)
 {
-    if (m_constant_buffer_map.find(NAME) == m_constant_buffer_map.end())
+    if (m_constant_buffer_map.find(location) == m_constant_buffer_map.end())
     {
-        m_constant_buffer_map[NAME] = new ConstantBufferVK(m_device, m_gpu, 16 * 2001);
+        m_constant_buffer_map[location] = new ConstantBufferVK(m_device, m_gpu, 16 * 2001);
     }
 
-    return m_constant_buffer_map[NAME];
+    return m_constant_buffer_map[location];
 }
 
 std::string VulkanRenderer::getShaderPath()
@@ -279,22 +279,57 @@ void VulkanRenderer::frame()
 
         std::vector<VkWriteDescriptorSet> write_desc_set_list;
         {
-            VkDescriptorBufferInfo desc_buff_info;
-            VertexBufferVK* buffer = m_vertex_buffer_list[0];
-            desc_buff_info.buffer = *buffer->getBuffer(0);
-            desc_buff_info.offset = 0;
-            desc_buff_info.range = buffer->getOffset();
-
             VkWriteDescriptorSet write_desc_set;
             write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             write_desc_set.pNext = NULL;
             write_desc_set.dstSet = desc_set;
-            write_desc_set.dstBinding = 0; // POSITION
             write_desc_set.dstArrayElement = 0;
             write_desc_set.descriptorCount = 1;
-            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
+            { // POSITION
+                unsigned int location = POSITION;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+            { // NORMAL
+                unsigned int location = NORMAL;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+            { // TEXTCOORD
+                unsigned int location = TEXTCOORD;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+            { // TRANSLATION
+                unsigned int location = TRANSLATION;
+                ConstantBufferVK* buff = m_constant_buffer_map[location];
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
+                write_desc_set.dstBinding = location;
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+            //{ // DIFFUSE_TINT
+            //    unsigned int location = DIFFUSE_TINT;
+            //    ConstantBufferVK* buff = m_constant_buffer_map[location];
+            //    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
+            //    write_desc_set.dstBinding = location;
+            //    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            //    write_desc_set.pBufferInfo = &desc_buff_info;
+            //    write_desc_set_list.push_back(write_desc_set);
+            //}
         }
 
         vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);

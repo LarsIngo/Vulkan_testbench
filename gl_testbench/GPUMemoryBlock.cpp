@@ -61,3 +61,18 @@ void GPUMemoryBlock::Reset()
 {
     m_offset = 0;
 }
+
+std::size_t GPUMemoryBlock::GetOffset()
+{
+    return m_offset;
+}
+
+std::size_t GPUMemoryBlock::GetSize()
+{
+    return m_total_size;
+}
+
+VkBuffer* GPUMemoryBlock::GetBuffer()
+{
+    return &m_buffer;
+}

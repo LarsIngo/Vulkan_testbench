@@ -1,11 +1,11 @@
 // inputs
-//#ifdef NORMAL
-//	layout( location = NORMAL ) in vec4 normal_in;
-//#endif
+#ifdef NORMAL
+	layout( location = NORMAL ) in vec4 normal_in;
+#endif
 
-//#ifdef TEXTCOORD
-//	layout (location = TEXTCOORD ) in vec2 uv_in;
-//#endif
+#ifdef TEXTCOORD
+	layout (location = TEXTCOORD ) in vec2 uv_in;
+#endif
 
 layout(location = 0) out vec4 fragment_color;
 

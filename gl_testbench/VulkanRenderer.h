@@ -107,7 +107,7 @@ private:
 
     std::vector<VertexBufferVK*> m_vertex_buffer_list;
 
-    std::map<std::string, ConstantBufferVK*> m_constant_buffer_map;
+    std::map<unsigned int, ConstantBufferVK*> m_constant_buffer_map;
     std::vector<MaterialVK*> m_material_list;
 
     VkCommandPool m_command_pool = VK_NULL_HANDLE;

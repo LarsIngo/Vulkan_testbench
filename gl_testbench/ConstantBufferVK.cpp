@@ -107,3 +107,19 @@ void ConstantBufferVK::Reset()
 {
     m_gpu_memory->Reset();
 }
+
+VkBuffer* ConstantBufferVK::GetBuffer()
+{
+    return m_gpu_memory->GetBuffer();
+}
+
+std::size_t ConstantBufferVK::GetTotalSize()
+{
+    return m_gpu_memory->GetSize();
+}
+
+std::size_t ConstantBufferVK::GetOffset()
+{
+    return m_gpu_memory->GetOffset();
+}
+

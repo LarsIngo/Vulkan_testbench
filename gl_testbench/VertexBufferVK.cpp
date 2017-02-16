@@ -5,11 +5,7 @@
 
 //GLuint VertexBufferGL::usageMapping[3] = { GL_STATIC_COPY, GL_DYNAMIC_COPY, GL_DONT_CARE };
 
-std::map<std::size_t, GPUMemoryBlock*> VertexBufferVK::m_s_gpu_memory_map = {};
-
-std::size_t VertexBufferVK::m_s_total_size = 48 * 2001;
-
-std::size_t VertexBufferVK::m_s_offset = 0;
+std::map<unsigned int, GPUMemoryBlock*> VertexBufferVK::m_s_gpu_memory_map = {};
 
 VertexBufferVK::VertexBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device)// : _handle(0)
 {
@@ -54,12 +50,12 @@ void VertexBufferVK::bind(size_t offset, size_t size, unsigned int location) {
     //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, location, _handle, offset, size);
 
     if (m_s_gpu_memory_map.find(location) == m_s_gpu_memory_map.end())
-        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, m_s_total_size,
+        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 48 * 2001,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    m_s_offset = m_s_gpu_memory_map[location]->Allocate(size);
-    m_s_gpu_memory_map[location]->Update(m_last_data, size, m_s_offset);
+    std::size_t buffer_offset = m_s_gpu_memory_map[location]->Allocate(size);
+    m_s_gpu_memory_map[location]->Update(m_last_data, size, buffer_offset);
 }
 
 void VertexBufferVK::unbind() {
@@ -67,11 +63,13 @@ void VertexBufferVK::unbind() {
 }
 
 std::size_t VertexBufferVK::getSize() {
-    return m_s_total_size;
+    assert(0 && "Don't use VertexBufferVK::getSize()");
+    return 0;
 }
 
 std::size_t VertexBufferVK::getOffset() {
-    return m_s_offset;
+    assert(0 && "Don't use VertexBufferVK::getOffset()");
+    return 0;
 }
 
 void VertexBufferVK::Reset()
@@ -87,8 +85,20 @@ void VertexBufferVK::Clear()
     m_s_gpu_memory_map.clear();
 }
 
-VkBuffer* VertexBufferVK::getBuffer(unsigned int location)
+VkBuffer* VertexBufferVK::GetBuffer(unsigned int location)
 {
     assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
-    return &m_s_gpu_memory_map[location]->m_buffer;
+    return m_s_gpu_memory_map[location]->GetBuffer();
+}
+
+std::size_t VertexBufferVK::GetTotalSize(unsigned int location)
+{
+    assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
+    return m_s_gpu_memory_map[location]->GetSize();
+}
+
+std::size_t VertexBufferVK::GetOffset(unsigned int location)
+{
+    assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
+    return m_s_gpu_memory_map[location]->GetOffset();
 }

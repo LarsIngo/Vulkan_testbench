@@ -354,8 +354,8 @@ int MaterialVK::compileMaterial(std::string& errString)
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkExtent2D tmpExtent;
-    tmpExtent.width = 640;
-    tmpExtent.height = 480;
+    tmpExtent.width = 800;
+    tmpExtent.height = 600;
 
     VkViewport viewport = {};
     viewport.x = 0.0f;
