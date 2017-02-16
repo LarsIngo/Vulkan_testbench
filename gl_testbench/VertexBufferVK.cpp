@@ -58,14 +58,6 @@ void VertexBufferVK::bind(size_t offset, size_t size, unsigned int location) {
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    // TMP
-    float tmpData[4] = { 1, 1, 1, 1 };
-    if (size == sizeof(float) * 4)
-    {
-        m_last_data = &tmpData;
-    }
-        
-
     m_s_offset = m_s_gpu_memory_map[location]->Allocate(size);
     m_s_gpu_memory_map[location]->Update(m_last_data, size, m_s_offset);
 }
