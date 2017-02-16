@@ -2,7 +2,7 @@
 #include "vkTools.hpp"
 #include <assert.h>
 
-GPUMemoryBlock::GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size, VkDescriptorType buffer_usage_flags, VkMemoryPropertyFlags memory_property_flags)
+GPUMemoryBlock::GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size, VkBufferUsageFlags buffer_usage_flags, VkMemoryPropertyFlags memory_property_flags)
 {
     m_p_device = &device;
     m_p_physical_device = &physical_device;
@@ -52,8 +52,8 @@ void GPUMemoryBlock::Update(const void* inData, std::size_t size, std::size_t of
 {
     assert(size + offset <= m_total_size);
     void* data;
-    vkMapMemory(*m_p_device, m_device_memory, m_offset, size, 0, &data);
-    memcpy(data, inData, (size_t)size);
+    vkTools::VkErrorCheck(vkMapMemory(*m_p_device, m_device_memory, offset, size, 0, &data));
+    std::memcpy(data, inData, size);
     vkUnmapMemory(*m_p_device, m_device_memory);
 }
 

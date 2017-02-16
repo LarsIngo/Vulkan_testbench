@@ -6,7 +6,7 @@
 class GPUMemoryBlock
 {
     public:
-        GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size, VkDescriptorType buffer_usage_flags, VkMemoryPropertyFlags memory_property_flags);
+        GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size, VkBufferUsageFlags buffer_usage_flags, VkMemoryPropertyFlags memory_property_flags);
         ~GPUMemoryBlock();
 
         VkDeviceMemory m_device_memory = VK_NULL_HANDLE;

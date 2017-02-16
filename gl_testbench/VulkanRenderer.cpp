@@ -236,6 +236,70 @@ void VulkanRenderer::frame()
         render_pass_begin_info.pClearValues = &clear_color;
 
         vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
+
+
+        VkDescriptorSet desc_set = VK_NULL_HANDLE;
+        {
+
+            VkDescriptorPool desc_pool = VK_NULL_HANDLE;
+            {
+                std::vector<VkDescriptorPoolSize> desc_pool_size_list;
+                {
+                    VkDescriptorPoolSize desc_pool_size;
+                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    desc_pool_size.descriptorCount = 3;
+                    desc_pool_size_list.push_back(desc_pool_size);
+
+                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    desc_pool_size.descriptorCount = 3;
+                    desc_pool_size_list.push_back(desc_pool_size);
+
+                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    desc_pool_size.descriptorCount = 1;
+                    desc_pool_size_list.push_back(desc_pool_size);
+                }
+
+                VkDescriptorPoolCreateInfo desc_pool_allocate_info;
+                desc_pool_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                desc_pool_allocate_info.pNext = NULL;
+                desc_pool_allocate_info.flags = 0; //VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT 
+                desc_pool_allocate_info.maxSets = 1;
+                desc_pool_allocate_info.pPoolSizes = desc_pool_size_list.data();
+                desc_pool_allocate_info.poolSizeCount = desc_pool_size_list.size();
+                vkTools::VkErrorCheck(vkCreateDescriptorPool(m_device, &desc_pool_allocate_info, nullptr, &desc_pool));
+            }
+            VkDescriptorSetAllocateInfo desc_set_allocate_info;
+            desc_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            desc_set_allocate_info.pNext = NULL;
+            desc_set_allocate_info.descriptorPool = desc_pool;
+            desc_set_allocate_info.pSetLayouts = &m->m_desc_set_layout;
+            desc_set_allocate_info.descriptorSetCount = 1;
+            vkTools::VkErrorCheck(vkAllocateDescriptorSets(m_device, &desc_set_allocate_info, &desc_set));
+        }
+
+        std::vector<VkWriteDescriptorSet> write_desc_set_list;
+        {
+            VkDescriptorBufferInfo desc_buff_info;
+            VertexBufferVK* buffer = m_vertex_buffer_list[0];
+            desc_buff_info.buffer = *buffer->getBuffer(0);
+            desc_buff_info.offset = 0;
+            desc_buff_info.range = buffer->getOffset();
+
+            VkWriteDescriptorSet write_desc_set;
+            write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_set.pNext = NULL;
+            write_desc_set.dstSet = desc_set;
+            write_desc_set.dstBinding = 0; // POSITION
+            write_desc_set.dstArrayElement = 0;
+            write_desc_set.descriptorCount = 1;
+            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
+
+        vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
+
+        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &desc_set, 0, nullptr);
         
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline );
         
@@ -612,7 +676,7 @@ void VulkanRenderer::m_InitSwapchain()
     VkSwapchainKHR new_swapchain = VK_NULL_HANDLE;
     vkTools::VkErrorCheck(vkCreateSwapchainKHR(m_device, &swapchain_create_info, nullptr, &new_swapchain));
 
-    *&m_swapchain = new_swapchain;
+    m_swapchain = new_swapchain;
 
     vkTools::VkErrorCheck(vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_swapchain_image_count, nullptr));
 

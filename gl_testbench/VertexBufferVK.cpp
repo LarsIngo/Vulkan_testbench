@@ -7,6 +7,10 @@
 
 std::map<std::size_t, GPUMemoryBlock*> VertexBufferVK::m_s_gpu_memory_map = {};
 
+std::size_t VertexBufferVK::m_s_total_size = 48 * 2001;
+
+std::size_t VertexBufferVK::m_s_offset = 0;
+
 VertexBufferVK::VertexBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device)// : _handle(0)
 {
     m_p_device = &device;
@@ -50,22 +54,32 @@ void VertexBufferVK::bind(size_t offset, size_t size, unsigned int location) {
     //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, location, _handle, offset, size);
 
     if (m_s_gpu_memory_map.find(location) == m_s_gpu_memory_map.end())
-        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 2001 * 48, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        m_s_gpu_memory_map[location] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, m_s_total_size,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    std::size_t bufferOffset = m_s_gpu_memory_map[location]->Allocate(size);
-    m_s_gpu_memory_map[location]->Update(m_last_data, size, bufferOffset);
+    // TMP
+    float tmpData[4] = { 1, 1, 1, 1 };
+    if (size == sizeof(float) * 4)
+    {
+        m_last_data = &tmpData;
+    }
+        
+
+    m_s_offset = m_s_gpu_memory_map[location]->Allocate(size);
+    m_s_gpu_memory_map[location]->Update(m_last_data, size, m_s_offset);
 }
 
 void VertexBufferVK::unbind() {
     //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-inline size_t VertexBufferVK::getSize() {
-    return m_size;
+std::size_t VertexBufferVK::getSize() {
+    return m_s_total_size;
 }
 
-inline size_t VertexBufferVK::getOffset() {
-    return m_offset;
+std::size_t VertexBufferVK::getOffset() {
+    return m_s_offset;
 }
 
 void VertexBufferVK::Reset()
@@ -79,4 +93,10 @@ void VertexBufferVK::Clear()
     for (auto& it : m_s_gpu_memory_map)
         delete it.second;
     m_s_gpu_memory_map.clear();
+}
+
+VkBuffer* VertexBufferVK::getBuffer(unsigned int location)
+{
+    assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
+    return &m_s_gpu_memory_map[location]->m_buffer;
 }

@@ -14,16 +14,18 @@ class VertexBufferVK : public VertexBuffer
         void setData(const void* data, size_t size, DATA_USAGE usage);
         void bind(size_t offset, size_t size, unsigned int location);
         void unbind();
-        size_t getSize();
-        size_t getOffset();
+        std::size_t getSize();
+        std::size_t getOffset();
+
+        VkBuffer* getBuffer(unsigned int location);
 
         void Reset();
         void Clear();
 
     private:
-        size_t m_size = 0;
+        static std::size_t m_s_total_size;
         //GLuint _handle;
-        size_t m_offset;
+        static std::size_t m_s_offset;
 
         const VkDevice* m_p_device = nullptr;
         const VkPhysicalDevice* m_p_physical_device = nullptr;
