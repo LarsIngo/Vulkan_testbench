@@ -20,6 +20,7 @@ class VertexBufferVK : public VertexBuffer
         std::size_t GetTotalSize(unsigned int location);
         std::size_t GetOffset(unsigned int location);
         VkBuffer* GetBuffer(unsigned int location);
+        VkDeviceSize GetAlignment(unsigned int location);
 
         void Reset();
         void Clear();

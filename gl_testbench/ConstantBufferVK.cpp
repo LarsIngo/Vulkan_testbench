@@ -123,3 +123,7 @@ std::size_t ConstantBufferVK::GetOffset()
     return m_gpu_memory->GetOffset();
 }
 
+VkDeviceSize ConstantBufferVK::GetAlignment()
+{
+    return m_gpu_memory->GetAlignment();
+}

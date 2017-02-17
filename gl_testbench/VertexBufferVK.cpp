@@ -102,3 +102,9 @@ std::size_t VertexBufferVK::GetOffset(unsigned int location)
     assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
     return m_s_gpu_memory_map[location]->GetOffset();
 }
+
+VkDeviceSize VertexBufferVK::GetAlignment(unsigned int location)
+{
+    assert(m_s_gpu_memory_map.find(location) != m_s_gpu_memory_map.end());
+    return m_s_gpu_memory_map[location]->GetAlignment();
+}

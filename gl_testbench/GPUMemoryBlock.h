@@ -19,11 +19,13 @@ class GPUMemoryBlock
         std::size_t GetSize();
         VkBuffer* GetBuffer();
 
+        VkDeviceSize GetAlignment();
+
     private:
         std::size_t m_total_size;
         std::size_t m_offset;
 
-
+        VkDeviceSize m_alignemnt;
         VkDeviceSize m_min_offset_alignment;
         
         VkDeviceMemory m_device_memory = VK_NULL_HANDLE;

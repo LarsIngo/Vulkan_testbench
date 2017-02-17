@@ -16,6 +16,7 @@ class ConstantBufferVK : public ConstantBuffer
         std::size_t GetTotalSize();
         std::size_t GetOffset();
         VkBuffer* GetBuffer();
+        VkDeviceSize GetAlignment();
 
     private:
         std::size_t m_total_size;

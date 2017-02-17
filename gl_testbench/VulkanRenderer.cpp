@@ -285,7 +285,7 @@ void VulkanRenderer::frame()
             { // POSITION
                 unsigned int location = POSITION;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -294,7 +294,7 @@ void VulkanRenderer::frame()
             { // NORMAL
                 unsigned int location = NORMAL;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -303,7 +303,7 @@ void VulkanRenderer::frame()
             { // TEXTCOORD
                 unsigned int location = TEXTCOORD;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -312,7 +312,7 @@ void VulkanRenderer::frame()
             { // TRANSLATION
                 unsigned int location = TRANSLATION;
                 ConstantBufferVK* buff = m_constant_buffer_map[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 32 * i, 16 };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), buff->GetAlignment() * i, 16 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
