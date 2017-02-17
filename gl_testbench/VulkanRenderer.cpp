@@ -170,7 +170,12 @@ TODO.
 */
 void VulkanRenderer::submit(Mesh* mesh)
 {
-    m_draw_list.push_back(mesh);
+    assert(mesh->technique != nullptr);
+    MeshEntry entry;
+    entry.mesh = mesh;
+    entry.index = submit_index;
+    m_draw_map[mesh->technique].push_back(entry);
+    submit_index++;
 }
 
 /*
@@ -212,15 +217,19 @@ void VulkanRenderer::frame()
     // GET NEXT IMAGE FROM SWAPCHAIN.
     vkTools::VkErrorCheck(vkAcquireNextImageKHR(m_device, m_swapchain, (std::numeric_limits<uint64_t>::max)(), m_present_complete_semaphore, VK_NULL_HANDLE, &m_render_swapchain_image_index));
     assert(m_render_swapchain_image_index <= m_swapchain_image_view_list.size());
+    
+    
     VkFramebuffer swapchain_frameBuffer = VK_NULL_HANDLE;
+    VkDescriptorSet desc_set = VK_NULL_HANDLE;
+    VkDescriptorPool desc_pool = VK_NULL_HANDLE;
 
     // START FRAME.
     VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
-
-    for (std::size_t i = 0; i < m_draw_list.size(); ++i)
+    
+    for (auto& draw_list : m_draw_map)
     {
-        Mesh* mesh = m_draw_list[i];
-        Technique* t = mesh->technique;
+        draw_list.second.size(); 
+        Technique* t = draw_list.first;
         MaterialVK* m = (MaterialVK*)t->material;
 
         vkTools::CreateFramebuffer(m_device, m_swapchain_extent, m->m_render_pass, m_swapchain_image_view_list[m_render_swapchain_image_index], swapchain_frameBuffer);
@@ -231,18 +240,11 @@ void VulkanRenderer::frame()
         render_pass_begin_info.framebuffer = swapchain_frameBuffer;
         render_pass_begin_info.renderArea.offset = { 0, 0 };
         render_pass_begin_info.renderArea.extent = m_swapchain_extent;
-
         VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
         render_pass_begin_info.clearValueCount = 1;
         render_pass_begin_info.pClearValues = &clear_color;
 
-        vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
-
-
-        VkDescriptorSet desc_set = VK_NULL_HANDLE;
         {
-
-            VkDescriptorPool desc_pool = VK_NULL_HANDLE;
             {
                 std::vector<VkDescriptorPoolSize> desc_pool_size_list;
                 {
@@ -274,75 +276,82 @@ void VulkanRenderer::frame()
             vkTools::VkErrorCheck(vkAllocateDescriptorSets(m_device, &desc_set_allocate_info, &desc_set));
         }
 
-        std::vector<VkWriteDescriptorSet> write_desc_set_list;
+        for (MeshEntry& entry : draw_list.second)
         {
-            VkWriteDescriptorSet write_desc_set;
-            write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write_desc_set.pNext = NULL;
-            write_desc_set.dstSet = desc_set;
-            write_desc_set.dstArrayElement = 0;
-            write_desc_set.descriptorCount = 1;
-            { // POSITION
-                unsigned int location = POSITION;
-                VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                write_desc_set.dstBinding = location;
-                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                write_desc_set.pBufferInfo = &desc_buff_info;
-                write_desc_set_list.push_back(write_desc_set);
+            Mesh* mesh = entry.mesh;
+            std::size_t i = entry.index;
+
+            vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+            std::vector<VkWriteDescriptorSet> write_desc_set_list;
+            {
+                VkWriteDescriptorSet write_desc_set;
+                write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write_desc_set.pNext = NULL;
+                write_desc_set.dstSet = desc_set;
+                write_desc_set.dstArrayElement = 0;
+                write_desc_set.descriptorCount = 1;
+                { // POSITION
+                    unsigned int location = POSITION;
+                    VertexBufferVK* buff = m_vertex_buffer_list[location];
+                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
+                    write_desc_set.dstBinding = location;
+                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    write_desc_set.pBufferInfo = &desc_buff_info;
+                    write_desc_set_list.push_back(write_desc_set);
+                }
+                { // NORMAL
+                    unsigned int location = NORMAL;
+                    VertexBufferVK* buff = m_vertex_buffer_list[location];
+                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
+                    write_desc_set.dstBinding = location;
+                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    write_desc_set.pBufferInfo = &desc_buff_info;
+                    write_desc_set_list.push_back(write_desc_set);
+                }
+                { // TEXTCOORD
+                    unsigned int location = TEXTCOORD;
+                    VertexBufferVK* buff = m_vertex_buffer_list[location];
+                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
+                    write_desc_set.dstBinding = location;
+                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    write_desc_set.pBufferInfo = &desc_buff_info;
+                    write_desc_set_list.push_back(write_desc_set);
+                }
+                { // TRANSLATION
+                    unsigned int location = TRANSLATION;
+                    ConstantBufferVK* buff = m_constant_buffer_map[location];
+                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), buff->GetAlignment() * i, 16 };
+                    write_desc_set.dstBinding = location;
+                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    write_desc_set.pBufferInfo = &desc_buff_info;
+                    write_desc_set_list.push_back(write_desc_set);
+                }
+                //{ // DIFFUSE_TINT
+                //    unsigned int location = DIFFUSE_TINT;
+                //    ConstantBufferVK* buff = m_constant_buffer_map[location];
+                //    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
+                //    write_desc_set.dstBinding = location;
+                //    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                //    write_desc_set.pBufferInfo = &desc_buff_info;
+                //    write_desc_set_list.push_back(write_desc_set);
+                //}
             }
-            { // NORMAL
-                unsigned int location = NORMAL;
-                VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                write_desc_set.dstBinding = location;
-                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                write_desc_set.pBufferInfo = &desc_buff_info;
-                write_desc_set_list.push_back(write_desc_set);
-            }
-            { // TEXTCOORD
-                unsigned int location = TEXTCOORD;
-                VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                write_desc_set.dstBinding = location;
-                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                write_desc_set.pBufferInfo = &desc_buff_info;
-                write_desc_set_list.push_back(write_desc_set);
-            }
-            { // TRANSLATION
-                unsigned int location = TRANSLATION;
-                ConstantBufferVK* buff = m_constant_buffer_map[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), buff->GetAlignment() * i, 16 };
-                write_desc_set.dstBinding = location;
-                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                write_desc_set.pBufferInfo = &desc_buff_info;
-                write_desc_set_list.push_back(write_desc_set);
-            }
-            //{ // DIFFUSE_TINT
-            //    unsigned int location = DIFFUSE_TINT;
-            //    ConstantBufferVK* buff = m_constant_buffer_map[location];
-            //    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
-            //    write_desc_set.dstBinding = location;
-            //    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            //    write_desc_set.pBufferInfo = &desc_buff_info;
-            //    write_desc_set_list.push_back(write_desc_set);
-            //}
+
+            vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
+
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &desc_set, 0, nullptr);
+
+            vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
+
+            vkCmdDraw(command_buffer, 3, 1, 0, 0);
+
+            vkCmdEndRenderPass(command_buffer);
+
+            //if (i >= 2)
+                break;
         }
-
-        vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
-
-        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &desc_set, 0, nullptr);
-        
-        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline );
-
-        vkCmdDraw(command_buffer, 3, 1, 0, 0 );
-
-        vkCmdEndRenderPass(command_buffer);
-
-        if (i >= 2) 
-            break;
     }
-
 
     vkTools::EndSingleTimeCommand(m_device, m_command_pool, m_graphics_queue, command_buffer);
     // END FRAME.
@@ -365,6 +374,8 @@ void VulkanRenderer::frame()
 
     for (auto& it : m_constant_buffer_map)
         it.second->Reset();
+
+    submit_index = 0;
 }
 
 

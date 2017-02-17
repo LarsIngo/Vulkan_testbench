@@ -127,7 +127,13 @@ private:
     //VkPipeline m_graphics_pipeline = VK_NULL_HANDLE;
 
     // Meshes to draw.
-    std::vector<Mesh*> m_draw_list;
+    struct MeshEntry
+    {
+        Mesh* mesh;
+        std::size_t index;
+    };
+    std::map<Technique*, std::vector<MeshEntry>> m_draw_map;
+    std::size_t submit_index = 0;
 
     // Wire frame mode.
     bool m_global_wireframe_mode = false;
