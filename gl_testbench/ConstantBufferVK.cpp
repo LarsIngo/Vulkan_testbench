@@ -7,7 +7,7 @@ ConstantBufferVK::ConstantBufferVK(const VkDevice& device, const VkPhysicalDevic
     m_p_device = &device;
     m_p_physical_device = &physical_device;
 
-    m_gpu_memory = new GPUMemoryBlock(device, physical_device, total_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_gpu_memory = new GPUMemoryBlock(device, physical_device, total_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
     m_total_size = total_size;
 
     //name = NAME;

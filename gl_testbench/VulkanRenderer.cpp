@@ -68,7 +68,7 @@ ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned in
 {
     if (m_constant_buffer_map.find(location) == m_constant_buffer_map.end())
     {
-        m_constant_buffer_map[location] = new ConstantBufferVK(m_device, m_gpu, 16 * 2001);
+        m_constant_buffer_map[location] = new ConstantBufferVK(m_device, m_gpu, 32 * 2001);
     }
 
     return m_constant_buffer_map[location];
@@ -217,8 +217,9 @@ void VulkanRenderer::frame()
     // START FRAME.
     VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
 
-    for (auto mesh : m_draw_list)
+    for (std::size_t i = 0; i < m_draw_list.size(); ++i)
     {
+        Mesh* mesh = m_draw_list[i];
         Technique* t = mesh->technique;
         MaterialVK* m = (MaterialVK*)t->material;
 
@@ -247,11 +248,7 @@ void VulkanRenderer::frame()
                 {
                     VkDescriptorPoolSize desc_pool_size;
                     desc_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    desc_pool_size.descriptorCount = 3;
-                    desc_pool_size_list.push_back(desc_pool_size);
-
-                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    desc_pool_size.descriptorCount = 3;
+                    desc_pool_size.descriptorCount = 5;
                     desc_pool_size_list.push_back(desc_pool_size);
 
                     desc_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -288,7 +285,7 @@ void VulkanRenderer::frame()
             { // POSITION
                 unsigned int location = POSITION;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -297,7 +294,7 @@ void VulkanRenderer::frame()
             { // NORMAL
                 unsigned int location = NORMAL;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -306,7 +303,7 @@ void VulkanRenderer::frame()
             { // TEXTCOORD
                 unsigned int location = TEXTCOORD;
                 VertexBufferVK* buff = m_vertex_buffer_list[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetOffset(location) };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 64 * i, 48 };
                 write_desc_set.dstBinding = location;
                 write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
@@ -315,9 +312,9 @@ void VulkanRenderer::frame()
             { // TRANSLATION
                 unsigned int location = TRANSLATION;
                 ConstantBufferVK* buff = m_constant_buffer_map[location];
-                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
+                VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 32 * i, 16 };
                 write_desc_set.dstBinding = location;
-                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 write_desc_set.pBufferInfo = &desc_buff_info;
                 write_desc_set_list.push_back(write_desc_set);
             }
@@ -337,12 +334,13 @@ void VulkanRenderer::frame()
         vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &desc_set, 0, nullptr);
         
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline );
-        
+
         vkCmdDraw(command_buffer, 3, 1, 0, 0 );
-        
+
         vkCmdEndRenderPass(command_buffer);
 
-        break;
+        if (i >= 2) 
+            break;
     }
 
 

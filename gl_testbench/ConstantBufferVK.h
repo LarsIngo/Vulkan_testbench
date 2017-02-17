@@ -6,7 +6,7 @@
 class ConstantBufferVK : public ConstantBuffer
 {
     public:
-        ConstantBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size );
+        ConstantBufferVK(const VkDevice& device, const VkPhysicalDevice& physical_device, std::size_t total_size);
         ~ConstantBufferVK();
         void setData(const void* data, size_t size, Material* m, unsigned int location);
         void bind(Material*);

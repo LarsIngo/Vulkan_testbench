@@ -11,12 +11,12 @@
 
 layout(binding=POSITION) buffer pos { vec4 position_in[]; };
 
-layout(binding=TRANSLATION) uniform TRANSLATION_NAME
+layout(binding=TRANSLATION) buffer TRANSLATION_NAME
 {
 	vec4 translate;
 };
 
-layout(binding=DIFFUSE_TINT) uniform DIFFUSE_TINT_NAME
+layout(binding=DIFFUSE_TINT) buffer DIFFUSE_TINT_NAME
 {
 	vec4 diffuseTint;
 };

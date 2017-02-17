@@ -124,7 +124,7 @@ void MaterialVK::addConstantBuffer(std::string name, unsigned int location)
 {
     //assert(m_constant_memory_map.find(name) == m_constant_memory_map.end());
     //m_constant_memory_map[name] = new GPUMemoryBlock(*m_p_device, *m_p_physical_device, 4096, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-    constantBuffers[location] = new ConstantBufferVK(*m_p_device, *m_p_physical_device, 16 * 2000);
+    constantBuffers[location] = new ConstantBufferVK(*m_p_device, *m_p_physical_device, 32 * 2001);
 }
 
 // location identifies the constant buffer in a unique way
@@ -299,7 +299,7 @@ int MaterialVK::compileMaterial(std::string& errString)
                 desc_set_layout_binding.binding = TEXTCOORD;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                //desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 desc_set_layout_binding.binding = TRANSLATION;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
