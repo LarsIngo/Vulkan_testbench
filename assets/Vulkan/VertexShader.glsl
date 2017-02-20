@@ -16,10 +16,10 @@ layout(binding=TRANSLATION) buffer TRANSLATION_NAME
 	vec4 translate;
 };
 
-//layout(binding=DIFFUSE_TINT) buffer DIFFUSE_TINT_NAME
-//{
-//	vec4 diffuseTint;
-//};
+layout(binding=DIFFUSE_TINT) buffer DIFFUSE_TINT_NAME
+{
+	vec4 diffuseTint;
+};
 
 layout(location=8) out vec4 debug_out;
 
@@ -27,7 +27,8 @@ void main() {
     uint vID = gl_VertexIndex;
     vec4 pos = position_in[vID];
     
-    debug_out = translate;
+    //debug_out = translate;
+    debug_out = vec4(vID == 0,0,0,1); 
     
     #ifdef NORMAL
 		normal_out = normal_in[vID];

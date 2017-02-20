@@ -265,6 +265,18 @@ void VulkanRenderer::frame()
             write_desc_set.pBufferInfo = &desc_buff_info;
             write_desc_set_list.push_back(write_desc_set);
         }
+        { // DIFFUSE_SLOT
+            unsigned int location = DIFFUSE_SLOT;
+            Texture2DVK* tex = nullptr;
+            VkDescriptorImageInfo descriptor_image_info;
+            descriptor_image_info.imageLayout = tex->GetLayout();
+            descriptor_image_info.imageView = tex->GetView();
+            descriptor_image_info.sampler = tex->GetSampler();
+            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_desc_set.dstBinding = location;
+            write_desc_set.pImageInfo = &descriptor_image_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
     }
 
 

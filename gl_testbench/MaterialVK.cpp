@@ -320,10 +320,10 @@ int MaterialVK::compileMaterial(std::string& errString)
                 //desc_set_layout_binding.binding = DIFFUSE_TINT;
                 //desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                //desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                //desc_set_layout_binding.stageFlags =  VK_SHADER_STAGE_FRAGMENT_BIT;
-                //desc_set_layout_binding.binding = DIFFUSE_SLOT;
-                //desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                desc_set_layout_binding.stageFlags =  VK_SHADER_STAGE_FRAGMENT_BIT;
+                desc_set_layout_binding.binding = DIFFUSE_SLOT;
+                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
             }
 
@@ -443,7 +443,7 @@ int MaterialVK::compileMaterial(std::string& errString)
             {
                 VkDescriptorPoolSize desc_pool_size;
                 desc_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-                desc_pool_size.descriptorCount = 4;
+                desc_pool_size.descriptorCount = 5;
                 desc_pool_size_list.push_back(desc_pool_size);
 
                 desc_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
