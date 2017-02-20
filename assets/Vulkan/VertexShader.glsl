@@ -16,10 +16,10 @@ layout(binding=TRANSLATION) buffer TRANSLATION_NAME
 	vec4 translate;
 };
 
-layout(binding=DIFFUSE_TINT) buffer DIFFUSE_TINT_NAME
-{
-	vec4 diffuseTint;
-};
+//layout(binding=DIFFUSE_TINT) buffer DIFFUSE_TINT_NAME
+//{
+//	vec4 diffuseTint;
+//};
 
 layout(location=8) out vec4 debug_out;
 

@@ -21,7 +21,6 @@ layout(location = 0) out vec4 fragment_color;
 
 layout(location=8) in vec4 debug_in;
 
-
 void main () {
 	//#ifdef DIFFUSE_SLOT
     //    vec4 col = texture(myTex, uv_in);

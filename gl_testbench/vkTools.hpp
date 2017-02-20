@@ -47,5 +47,7 @@ namespace vkTools
     void BeginCommandBuffer(const VkCommandBufferUsageFlags command_buffer_useage_flags, const VkCommandBufferInheritanceInfo command_buffer_inheritance_info, const VkCommandBuffer& command_buffer);
     void EndCommandBuffer( const VkCommandBuffer& command_buffer );
     void SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& command_buffer );
+    void WaitQueue(const VkQueue& queue );
+    void ResetCommandBuffer( VkCommandBuffer& command_buffer );
     void FreeCommandBuffer( const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBuffer& command_buffer );
 }

@@ -30,11 +30,13 @@ int VulkanRenderer::shutdown()
 {
     vkDeviceWaitIdle(m_device);
 
+    m_DeInitFrameBuffers();
+    m_DeInitCommandBuffers();
     m_DeInitSemaphores();
     m_DeInitCommandPool();
     m_DeInitDeviceMemory();
     //m_DeInitGraphicsPipeline();
-    //m_DeInitRenderPass();
+    m_DeInitRenderPass();
     //m_DeInitFrameBuffers();
     m_DeInitSwapchainImageViews();
     m_DeInitSwapchain();
@@ -93,7 +95,7 @@ VertexBuffer* VulkanRenderer::makeVertexBuffer()
 
 Material* VulkanRenderer::makeMaterial()
 {
-    MaterialVK* mat = new MaterialVK(m_device, m_gpu);
+    MaterialVK* mat = new MaterialVK(m_device, m_gpu, &m_render_pass);
     m_material_list.push_back(mat);
     return (Material*)mat;
 }
@@ -154,12 +156,14 @@ int VulkanRenderer::initialize(unsigned int width, unsigned int height)
     m_InitSurface();
     m_InitSwapchain();
     m_InitSwapchainImageViews();
-    //m_InitRenderPass();
+    m_InitRenderPass();
     //m_InitGraphicsPipeline();
     //m_InitFrameBuffers();
     m_InitDeviceMemory();
     m_InitCommandPool();
     m_InitSemaphores();
+    m_InitCommandBuffers();
+    m_InitFrameBuffers();
 
     return 0;
 }
@@ -184,6 +188,7 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
+
     //for (auto mesh : m_draw_list)
     //{
     //    glBindTexture(GL_TEXTURE_2D, 0);
@@ -214,146 +219,109 @@ void VulkanRenderer::frame()
     //}
     //m_draw_list.clear();
 
+    VkDescriptorSetLayout descriptor_set_layout = MaterialVK::GetDescriptorSetLayout();
+    VkDescriptorSet descriptor_set =  MaterialVK::GetDescriptorSet();
+    VkDescriptorPool descriptor_pool = MaterialVK::GetDescriptorPool();
+
+    std::vector<VkWriteDescriptorSet> write_desc_set_list;
+    {
+        VkWriteDescriptorSet write_desc_set;
+        write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write_desc_set.pNext = NULL;
+        write_desc_set.dstSet = descriptor_set;
+        write_desc_set.dstArrayElement = 0;
+        write_desc_set.descriptorCount = 1;
+        write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        { // POSITION
+            unsigned int location = POSITION;
+            VertexBufferVK* buff = m_vertex_buffer_list[location];
+            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+            write_desc_set.dstBinding = location;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
+        { // NORMAL
+            unsigned int location = NORMAL;
+            VertexBufferVK* buff = m_vertex_buffer_list[location];
+            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+            write_desc_set.dstBinding = location;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
+        { // TEXTCOORD
+            unsigned int location = TEXTCOORD;
+            VertexBufferVK* buff = m_vertex_buffer_list[location];
+            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+            write_desc_set.dstBinding = location;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
+        { // TRANSLATION
+            unsigned int location = TRANSLATION;
+            ConstantBufferVK* buff = m_constant_buffer_map[location];
+            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
+            write_desc_set.dstBinding = location;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+        }
+    }
+
+
+
     // GET NEXT IMAGE FROM SWAPCHAIN.
     vkTools::VkErrorCheck(vkAcquireNextImageKHR(m_device, m_swapchain, (std::numeric_limits<uint64_t>::max)(), m_present_complete_semaphore, VK_NULL_HANDLE, &m_render_swapchain_image_index));
     assert(m_render_swapchain_image_index <= m_swapchain_image_view_list.size());
     
-    
-    VkFramebuffer swapchain_frameBuffer = VK_NULL_HANDLE;
-    VkDescriptorSet desc_set = VK_NULL_HANDLE;
-    VkDescriptorPool desc_pool = VK_NULL_HANDLE;
+    //VkFramebuffer swapchain_frameBuffer = VK_NULL_HANDLE;
+    //vkTools::CreateFramebuffer(m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[m_render_swapchain_image_index], swapchain_frameBuffer);
+    VkFramebuffer& swapchain_frameBuffer = m_swapchain_framebuffer_list[m_render_swapchain_image_index];
+
+    VkRenderPassBeginInfo render_pass_begin_info = {};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.renderPass = m_render_pass;
+    render_pass_begin_info.framebuffer = swapchain_frameBuffer;
+    render_pass_begin_info.renderArea.offset = { 0, 0 };
+    render_pass_begin_info.renderArea.extent = m_swapchain_extent;
+    VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
+    render_pass_begin_info.clearValueCount = 1;
+    render_pass_begin_info.pClearValues = &clear_color;
 
     // START FRAME.
-    VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
-    
+    //VkCommandBuffer command_buffer = vkTools::BeginSingleTimeCommand(m_device, m_command_pool);
+    VkCommandBuffer& command_buffer = m_swapchain_command_buffer_list[m_render_swapchain_image_index];
+    vkTools::BeginCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, command_buffer);
+
+    vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
+
     for (auto& draw_list : m_draw_map)
     {
         draw_list.second.size(); 
         Technique* t = draw_list.first;
         MaterialVK* m = (MaterialVK*)t->material;
 
-        vkTools::CreateFramebuffer(m_device, m_swapchain_extent, m->m_render_pass, m_swapchain_image_view_list[m_render_swapchain_image_index], swapchain_frameBuffer);
-
-        VkRenderPassBeginInfo render_pass_begin_info = {};
-        render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        render_pass_begin_info.renderPass = m->m_render_pass;
-        render_pass_begin_info.framebuffer = swapchain_frameBuffer;
-        render_pass_begin_info.renderArea.offset = { 0, 0 };
-        render_pass_begin_info.renderArea.extent = m_swapchain_extent;
-        VkClearValue clear_color = { m_clear_color[0], m_clear_color[1], m_clear_color[2], m_clear_color[3] };
-        render_pass_begin_info.clearValueCount = 1;
-        render_pass_begin_info.pClearValues = &clear_color;
-
-        {
-            {
-                std::vector<VkDescriptorPoolSize> desc_pool_size_list;
-                {
-                    VkDescriptorPoolSize desc_pool_size;
-                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    desc_pool_size.descriptorCount = 5;
-                    desc_pool_size_list.push_back(desc_pool_size);
-
-                    desc_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    desc_pool_size.descriptorCount = 1;
-                    desc_pool_size_list.push_back(desc_pool_size);
-                }
-
-                VkDescriptorPoolCreateInfo desc_pool_allocate_info;
-                desc_pool_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-                desc_pool_allocate_info.pNext = NULL;
-                desc_pool_allocate_info.flags = 0; //VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT 
-                desc_pool_allocate_info.maxSets = 1;
-                desc_pool_allocate_info.pPoolSizes = desc_pool_size_list.data();
-                desc_pool_allocate_info.poolSizeCount = desc_pool_size_list.size();
-                vkTools::VkErrorCheck(vkCreateDescriptorPool(m_device, &desc_pool_allocate_info, nullptr, &desc_pool));
-            }
-            VkDescriptorSetAllocateInfo desc_set_allocate_info;
-            desc_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            desc_set_allocate_info.pNext = NULL;
-            desc_set_allocate_info.descriptorPool = desc_pool;
-            desc_set_allocate_info.pSetLayouts = &m->m_desc_set_layout;
-            desc_set_allocate_info.descriptorSetCount = 1;
-            vkTools::VkErrorCheck(vkAllocateDescriptorSets(m_device, &desc_set_allocate_info, &desc_set));
-        }
-
         for (MeshEntry& entry : draw_list.second)
         {
             Mesh* mesh = entry.mesh;
-            std::size_t i = entry.index;
+            std::uint32_t i = entry.index;
 
-            vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-            std::vector<VkWriteDescriptorSet> write_desc_set_list;
-            {
-                VkWriteDescriptorSet write_desc_set;
-                write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                write_desc_set.pNext = NULL;
-                write_desc_set.dstSet = desc_set;
-                write_desc_set.dstArrayElement = 0;
-                write_desc_set.descriptorCount = 1;
-                { // POSITION
-                    unsigned int location = POSITION;
-                    VertexBufferVK* buff = m_vertex_buffer_list[location];
-                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                    write_desc_set.dstBinding = location;
-                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    write_desc_set.pBufferInfo = &desc_buff_info;
-                    write_desc_set_list.push_back(write_desc_set);
-                }
-                { // NORMAL
-                    unsigned int location = NORMAL;
-                    VertexBufferVK* buff = m_vertex_buffer_list[location];
-                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                    write_desc_set.dstBinding = location;
-                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    write_desc_set.pBufferInfo = &desc_buff_info;
-                    write_desc_set_list.push_back(write_desc_set);
-                }
-                { // TEXTCOORD
-                    unsigned int location = TEXTCOORD;
-                    VertexBufferVK* buff = m_vertex_buffer_list[location];
-                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), buff->GetAlignment(location) * i, 48 };
-                    write_desc_set.dstBinding = location;
-                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    write_desc_set.pBufferInfo = &desc_buff_info;
-                    write_desc_set_list.push_back(write_desc_set);
-                }
-                { // TRANSLATION
-                    unsigned int location = TRANSLATION;
-                    ConstantBufferVK* buff = m_constant_buffer_map[location];
-                    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), buff->GetAlignment() * i, 16 };
-                    write_desc_set.dstBinding = location;
-                    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    write_desc_set.pBufferInfo = &desc_buff_info;
-                    write_desc_set_list.push_back(write_desc_set);
-                }
-                //{ // DIFFUSE_TINT
-                //    unsigned int location = DIFFUSE_TINT;
-                //    ConstantBufferVK* buff = m_constant_buffer_map[location];
-                //    VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetOffset() };
-                //    write_desc_set.dstBinding = location;
-                //    write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                //    write_desc_set.pBufferInfo = &desc_buff_info;
-                //    write_desc_set_list.push_back(write_desc_set);
-                //}
-            }
-
-            vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
-
-            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &desc_set, 0, nullptr);
+            std::vector<std::uint32_t> offset_list = { i*64, i*64, i*64, i*32 };
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &descriptor_set, offset_list.size(), offset_list.data());
 
             vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
             vkCmdDraw(command_buffer, 3, 1, 0, 0);
-
-            vkCmdEndRenderPass(command_buffer);
-
-            //if (i >= 2)
-                break;
         }
     }
 
-    vkTools::EndSingleTimeCommand(m_device, m_command_pool, m_graphics_queue, command_buffer);
+    vkCmdEndRenderPass(command_buffer);
+
+    //vkTools::EndSingleTimeCommand(m_device, m_command_pool, m_graphics_queue, command_buffer);
+    vkTools::EndCommandBuffer(command_buffer);
+    vkTools::SubmitCommandBuffer(m_graphics_queue, command_buffer);
+    vkTools::WaitQueue(m_graphics_queue);
+    vkTools::ResetCommandBuffer(command_buffer);
     // END FRAME.
 
     vkDestroyFramebuffer(m_device, swapchain_frameBuffer, nullptr);
@@ -768,16 +736,16 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
     }
 }
 
-//void VulkanRenderer::m_InitRenderPass()
-//{
-//    vkTools::CreateRenderPass(m_device, m_surface_format.format, m_render_pass);
-//}
-//
-//void VulkanRenderer::m_DeInitRenderPass()
-//{
-//    vkDestroyRenderPass(m_device, m_render_pass, nullptr);
-//    m_render_pass = VK_NULL_HANDLE;
-//}
+void VulkanRenderer::m_InitRenderPass()
+{
+    vkTools::CreateRenderPass(m_device, m_surface_format.format, m_render_pass);
+}
+
+void VulkanRenderer::m_DeInitRenderPass()
+{
+    vkDestroyRenderPass(m_device, m_render_pass, nullptr);
+    m_render_pass = VK_NULL_HANDLE;
+}
 //
 //void VulkanRenderer::m_InitGraphicsPipeline()
 //{
@@ -803,22 +771,6 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
 //    vkDestroyShaderModule( m_device, m_frag_shader_module, nullptr );
 //}
 
-//void VulkanRenderer::m_InitFrameBuffers()
-//{
-//    m_swapchain_framebuffer_list.resize(m_swapchain_image_count);
-//    for ( uint32_t i = 0; i < m_swapchain_image_count; ++i )
-//        vkTools::CreateFramebuffer( m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[ i ], m_swapchain_framebuffer_list[ i ] );
-//}
-//
-//void VulkanRenderer::m_DeInitFrameBuffers()
-//{
-//    for ( auto& swapchain_frame_buffer : m_swapchain_framebuffer_list ) {
-//        vkDestroyFramebuffer( m_device, swapchain_frame_buffer, nullptr );
-//        swapchain_frame_buffer = VK_NULL_HANDLE;
-//    }
-//}
-
-
 void VulkanRenderer::m_InitDeviceMemory()
 {
 
@@ -838,6 +790,7 @@ void VulkanRenderer::m_InitCommandPool()
     VkCommandPoolCreateInfo command_pool_create_info = {};
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_create_info.queueFamilyIndex = m_graphics_family_index;
+    command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     vkTools::VkErrorCheck(vkCreateCommandPool(m_device, &command_pool_create_info, nullptr, &m_command_pool));
 }
@@ -865,4 +818,34 @@ void VulkanRenderer::m_DeInitSemaphores()
     m_render_complete_semaphore = VK_NULL_HANDLE;
     vkDestroySemaphore(m_device, m_present_complete_semaphore, nullptr);
     m_present_complete_semaphore = VK_NULL_HANDLE;
+}
+
+void VulkanRenderer::m_InitCommandBuffers()
+{
+    m_swapchain_command_buffer_list.resize(m_swapchain_image_count);
+    for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
+        vkTools::CreateCommandBuffer(m_device, m_command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_swapchain_command_buffer_list[i]);
+}
+
+void VulkanRenderer::m_DeInitCommandBuffers()
+{
+    for (auto& command_buffer : m_swapchain_command_buffer_list) {
+        vkTools::FreeCommandBuffer(m_device, m_command_pool, command_buffer);
+        command_buffer = VK_NULL_HANDLE;
+    }
+}
+
+void VulkanRenderer::m_InitFrameBuffers()
+{
+    m_swapchain_framebuffer_list.resize(m_swapchain_image_count);
+    for ( uint32_t i = 0; i < m_swapchain_image_count; ++i )
+        vkTools::CreateFramebuffer( m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[ i ], m_swapchain_framebuffer_list[ i ] );
+}
+
+void VulkanRenderer::m_DeInitFrameBuffers()
+{
+    for ( auto& swapchain_frame_buffer : m_swapchain_framebuffer_list ) {
+        vkDestroyFramebuffer( m_device, swapchain_frame_buffer, nullptr );
+        swapchain_frame_buffer = VK_NULL_HANDLE;
+    }
 }

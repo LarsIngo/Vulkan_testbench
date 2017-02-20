@@ -107,10 +107,9 @@ private:
     std::vector<VkImageView> m_swapchain_image_view_list;
 
     std::vector<VertexBufferVK*> m_vertex_buffer_list;
-
-    std::map<unsigned int, BindBufferVK*> m_bind_buffer_map;
-
     std::map<unsigned int, ConstantBufferVK*> m_constant_buffer_map;
+    std::map<unsigned int, std::uint32_t> m_alignment_map;
+
     std::vector<MaterialVK*> m_material_list;
 
     VkCommandPool m_command_pool = VK_NULL_HANDLE;
@@ -120,10 +119,11 @@ private:
     VkSemaphore m_present_complete_semaphore = VK_NULL_HANDLE;
     VkSemaphore m_render_complete_semaphore = VK_NULL_HANDLE;
     uint32_t m_render_swapchain_image_index = 0;
-    //std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
-    //std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
+    std::vector<VkFramebuffer> m_swapchain_framebuffer_list;
+    std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
 
-    //VkRenderPass m_render_pass = VK_NULL_HANDLE;
+    VkRenderPass m_render_pass = VK_NULL_HANDLE;
+
     //VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
     //VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;
     //VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
@@ -176,17 +176,13 @@ private:
     void m_InitSwapchainImageViews();
     void m_DeInitSwapchainImageViews();
 
-    //// Render pass.
-    //void m_InitRenderPass();
-    //void m_DeInitRenderPass();
+    // Render pass.
+    void m_InitRenderPass();
+    void m_DeInitRenderPass();
 
     //// Pipeline.
     //void m_InitGraphicsPipeline();
     //void m_DeInitGraphicsPipeline();
-
-    // Frame buffers.
-    //void m_InitFrameBuffers();
-    //void m_DeInitFrameBuffers();
 
     // Allocate device memory.
     void m_InitDeviceMemory();
@@ -199,4 +195,12 @@ private:
     // Semaphores.
     void m_InitSemaphores();
     void m_DeInitSemaphores();
+
+    // Command buffers.
+    void m_InitCommandBuffers();
+    void m_DeInitCommandBuffers();
+
+    // Frame buffers.
+    void m_InitFrameBuffers();
+    void m_DeInitFrameBuffers();
 };

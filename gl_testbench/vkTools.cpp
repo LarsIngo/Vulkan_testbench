@@ -336,8 +336,7 @@ void vkTools::EndCommandBuffer( const VkCommandBuffer& command_buffer ) {
     VkErrorCheck(vkEndCommandBuffer(command_buffer));
 }
 
-void vkTools::SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& command_buffer )
-{
+void vkTools::SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& command_buffer ) {
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
@@ -347,8 +346,15 @@ void vkTools::SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& comman
     //VkErrorCheck(vkQueueWaitIdle(queue));
 }
 
-void vkTools::FreeCommandBuffer( const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBuffer& command_buffer )
-{
+void vkTools::WaitQueue( const VkQueue& queue ) {
+    VkErrorCheck(vkQueueWaitIdle(queue));
+}
+
+void vkTools::ResetCommandBuffer( VkCommandBuffer& command_buffer ) {
+    vkResetCommandBuffer(command_buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+}
+
+void vkTools::FreeCommandBuffer( const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBuffer& command_buffer ) {
     vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
 }
 

@@ -43,7 +43,7 @@ class MaterialVK : public Material
     friend VulkanRenderer;
 
     public:
-        MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_device);
+        MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_device, VkRenderPass* render_pass);
         ~MaterialVK();
 
 
@@ -61,6 +61,10 @@ class MaterialVK : public Material
         void addConstantBuffer(std::string name, unsigned int location);
 
         void Reset();
+
+        static VkDescriptorSetLayout& GetDescriptorSetLayout();
+        static VkDescriptorSet& GetDescriptorSet();
+        static VkDescriptorPool& GetDescriptorPool();
 
     private:
         //// map from ShaderType to GL_VERTEX_SHADER, should be static.
@@ -87,10 +91,12 @@ class MaterialVK : public Material
 
         std::map<VkShaderStageFlagBits, VkShaderModule> m_shader_module_map;
 
-        VkRenderPass m_render_pass = VK_NULL_HANDLE;
-        VkDescriptorSetLayout m_desc_set_layout = VK_NULL_HANDLE;
+        VkRenderPass* m_p_render_pass;
+        static VkDescriptorSetLayout m_desc_set_layout;
         VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
         VkPipeline m_pipeline = VK_NULL_HANDLE;
 
+        static VkDescriptorSet m_descriptor_set;
+        static VkDescriptorPool m_descriptor_pool;
 };
 

@@ -14,7 +14,9 @@
 
 typedef unsigned int uint;
 
-
+VkDescriptorSetLayout MaterialVK::m_desc_set_layout = VK_NULL_HANDLE;
+VkDescriptorSet MaterialVK::m_descriptor_set = VK_NULL_HANDLE;
+VkDescriptorPool MaterialVK::m_descriptor_pool = VK_NULL_HANDLE;
 
 //// recursive function to split a string by a delimiter
 //// easier to read than all that crap using STL...
@@ -49,7 +51,7 @@ std::vector<std::string> MaterialVK::expandShaderText(std::string& shaderSource,
     return result;
 };
 
-MaterialVK::MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_device)
+MaterialVK::MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_device, VkRenderPass* render_pass)
 {
     /*isValid = false;
     mapShaderEnum[(uint)ShaderType::VS] = GL_VERTEX_SHADER;
@@ -59,6 +61,7 @@ MaterialVK::MaterialVK(const VkDevice& device, const VkPhysicalDevice& physical_
 
     m_p_device = &device;
     m_p_physical_device = &physical_device;
+    m_p_render_pass = render_pass;
 
     //m_p_gpu_memory_block = gpu_memory_block;
 
@@ -94,13 +97,27 @@ MaterialVK::~MaterialVK()
     for (auto& it : constantBuffers)
         delete it.second;
 
-    if (m_render_pass != VK_NULL_HANDLE) vkDestroyRenderPass(*m_p_device, m_render_pass, nullptr);
-
     if (m_pipeline_layout != VK_NULL_HANDLE) vkDestroyPipelineLayout(*m_p_device, m_pipeline_layout, nullptr);
     
     if (m_pipeline != VK_NULL_HANDLE) vkDestroyPipeline(*m_p_device, m_pipeline, nullptr);
     
-    if (m_desc_set_layout != VK_NULL_HANDLE) vkDestroyDescriptorSetLayout(*m_p_device, m_desc_set_layout, nullptr);
+    if (m_desc_set_layout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(*m_p_device, m_desc_set_layout, nullptr);
+        m_desc_set_layout = VK_NULL_HANDLE;
+    }
+
+    if (m_descriptor_set != VK_NULL_HANDLE)
+    {
+        vkFreeDescriptorSets(*m_p_device, m_descriptor_pool, 1, &m_descriptor_set);
+        m_descriptor_set = VK_NULL_HANDLE;
+    }
+
+    if (m_descriptor_pool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(*m_p_device, m_descriptor_pool, nullptr);
+        m_descriptor_pool = VK_NULL_HANDLE;
+    }
         
 };
 
@@ -278,11 +295,9 @@ int MaterialVK::compileMaterial(std::string& errString)
     //INFO_OUT(program, Program);
     //COMPILE_LOG(program, Program, err2);
 
-    VkFormat tmpFormat = VK_FORMAT_B8G8R8A8_UNORM;
-    vkTools::CreateRenderPass(*m_p_device, tmpFormat, m_render_pass);
-
     //CreatePipelineLayout
     {
+        if (m_desc_set_layout == VK_NULL_HANDLE)
         {
             std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
             {
@@ -291,26 +306,24 @@ int MaterialVK::compileMaterial(std::string& errString)
                 desc_set_layout_binding.pImmutableSamplers = nullptr;
 
                 desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
                 desc_set_layout_binding.binding = POSITION;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
                 desc_set_layout_binding.binding = NORMAL;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
                 desc_set_layout_binding.binding = TEXTCOORD;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
-
-                //desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 desc_set_layout_binding.binding = TRANSLATION;
                 desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-                desc_set_layout_binding.binding = DIFFUSE_TINT;
-                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                //desc_set_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+                //desc_set_layout_binding.binding = DIFFUSE_TINT;
+                //desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
-                desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                desc_set_layout_binding.stageFlags =  VK_SHADER_STAGE_FRAGMENT_BIT;
-                desc_set_layout_binding.binding = DIFFUSE_SLOT;
-                desc_set_layout_binding_list.push_back(desc_set_layout_binding);
+                //desc_set_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                //desc_set_layout_binding.stageFlags =  VK_SHADER_STAGE_FRAGMENT_BIT;
+                //desc_set_layout_binding.binding = DIFFUSE_SLOT;
+                //desc_set_layout_binding_list.push_back(desc_set_layout_binding);
 
             }
 
@@ -417,12 +430,44 @@ int MaterialVK::compileMaterial(std::string& errString)
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = m_pipeline_layout;
-    pipelineInfo.renderPass = m_render_pass;
+    pipelineInfo.renderPass = *m_p_render_pass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
     vkTools::VkErrorCheck(vkCreateGraphicsPipelines(*m_p_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline));
 
+    if (m_descriptor_pool == VK_NULL_HANDLE)
+    {
+        {
+            std::vector<VkDescriptorPoolSize> desc_pool_size_list;
+            {
+                VkDescriptorPoolSize desc_pool_size;
+                desc_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+                desc_pool_size.descriptorCount = 4;
+                desc_pool_size_list.push_back(desc_pool_size);
+
+                desc_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                desc_pool_size.descriptorCount = 1;
+                desc_pool_size_list.push_back(desc_pool_size);
+            }
+
+            VkDescriptorPoolCreateInfo desc_pool_allocate_info;
+            desc_pool_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            desc_pool_allocate_info.pNext = NULL;
+            desc_pool_allocate_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            desc_pool_allocate_info.maxSets = 1;
+            desc_pool_allocate_info.pPoolSizes = desc_pool_size_list.data();
+            desc_pool_allocate_info.poolSizeCount = desc_pool_size_list.size();
+            vkTools::VkErrorCheck(vkCreateDescriptorPool(*m_p_device, &desc_pool_allocate_info, nullptr, &m_descriptor_pool));
+        }
+        VkDescriptorSetAllocateInfo desc_set_allocate_info;
+        desc_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        desc_set_allocate_info.pNext = NULL;
+        desc_set_allocate_info.descriptorPool = m_descriptor_pool;
+        desc_set_allocate_info.pSetLayouts = &m_desc_set_layout;
+        desc_set_allocate_info.descriptorSetCount = 1;
+        vkTools::VkErrorCheck(vkAllocateDescriptorSets(*m_p_device, &desc_set_allocate_info, &m_descriptor_set));
+    }
 
     isValid = true;
     return 0;
@@ -457,4 +502,19 @@ void MaterialVK::Reset()
 {
     for (auto& it : constantBuffers)
         it.second->Reset();
+}
+
+VkDescriptorSetLayout& MaterialVK::GetDescriptorSetLayout()
+{
+    return m_desc_set_layout;
+}
+
+VkDescriptorSet& MaterialVK::GetDescriptorSet()
+{
+    return m_descriptor_set;
+}
+
+VkDescriptorPool& MaterialVK::GetDescriptorPool()
+{
+    return m_descriptor_pool;
 }
