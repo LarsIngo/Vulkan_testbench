@@ -99,19 +99,6 @@ void vkTools::CreateRenderPass( const VkDevice& device, const VkFormat& format, 
     VkErrorCheck( vkCreateRenderPass( device, &renderPassInfo, nullptr, &render_pass ) );
 }
 
-
-void vkTools::CreateCommandBuffers( const VkDevice& device, const VkCommandPool& command_pool, const uint32_t& command_buffer_count, VkCommandBuffer* command_buffer_data )
-{
-    VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
-    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffer_allocate_info.commandBufferCount = command_buffer_count;
-    command_buffer_allocate_info.commandPool = command_pool;
-    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    VkErrorCheck( vkAllocateCommandBuffers( device, &command_buffer_allocate_info, command_buffer_data) );
-}
-
-
 void vkTools::CreateFramebuffer( const VkDevice& device, const VkExtent2D extent, const VkRenderPass& render_pass, const VkImageView& image_view, VkFramebuffer& framebuffer )
 {
     VkFramebufferCreateInfo framebuffer_create_info = {};
@@ -316,6 +303,54 @@ void vkTools::EndSingleTimeCommand( const VkDevice& device, const VkCommandPool&
     vkFreeCommandBuffers( device, command_pool, 1, &command_buffer );
 }
 
+void vkTools::CreateCommandBuffer(const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBufferLevel command_buffer_level, VkCommandBuffer& command_buffer)
+{
+    VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
+    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.commandBufferCount = 1;
+    command_buffer_allocate_info.commandPool = command_pool;
+    command_buffer_allocate_info.level = command_buffer_level;
+
+    VkErrorCheck(vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &command_buffer));
+}
+
+void vkTools::BeginCommandBuffer( const VkCommandBufferUsageFlags command_buffer_useage_flags, const VkCommandBuffer& command_buffer ) {
+    VkCommandBufferBeginInfo command_buffer_begin_info = {};
+    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags = command_buffer_useage_flags;
+
+    VkErrorCheck(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
+}
+
+void vkTools::BeginCommandBuffer(const VkCommandBufferUsageFlags command_buffer_useage_flags, const VkCommandBufferInheritanceInfo command_buffer_inheritance_info, const VkCommandBuffer& command_buffer) {
+    VkCommandBufferBeginInfo command_buffer_begin_info = {};
+    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags = command_buffer_useage_flags;
+    command_buffer_begin_info.pInheritanceInfo = &command_buffer_inheritance_info;
+
+    VkErrorCheck(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
+}
+
+
+void vkTools::EndCommandBuffer( const VkCommandBuffer& command_buffer ) {
+    VkErrorCheck(vkEndCommandBuffer(command_buffer));
+}
+
+void vkTools::SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& command_buffer )
+{
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &command_buffer;
+
+    VkErrorCheck(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+    //VkErrorCheck(vkQueueWaitIdle(queue));
+}
+
+void vkTools::FreeCommandBuffer( const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBuffer& command_buffer )
+{
+    vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+}
 
 void vkTools::AssertErrorMsg( const char* error_type, const char* error_msg )
 {

@@ -22,8 +22,6 @@ namespace vkTools
 
     void CreateRenderPass( const VkDevice& device, const VkFormat& format, VkRenderPass& render_pass );
 
-    void CreateCommandBuffers( const VkDevice& device, const VkCommandPool& command_pool, const uint32_t& command_buffer_count, VkCommandBuffer* command_buffer_data );
-
     void CreateFramebuffer( const VkDevice& device, const VkExtent2D extent, const VkRenderPass& render_pass, const VkImageView& image_view, VkFramebuffer& framebuffer );
 
     void CreatePipelineLayout( const VkDevice& device, VkPipelineLayout& pipeline_layout );
@@ -44,4 +42,10 @@ namespace vkTools
     VkCommandBuffer BeginSingleTimeCommand( const VkDevice& device, const VkCommandPool& command_pool );
     void EndSingleTimeCommand( const VkDevice& device, const VkCommandPool& command_pool, const VkQueue& queue, const VkCommandBuffer& command_buffer );
 
+    void CreateCommandBuffer(const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBufferLevel command_buffer_level, VkCommandBuffer& command_buffer);
+    void BeginCommandBuffer(const VkCommandBufferUsageFlags command_buffer_useage_flags, const VkCommandBuffer& command_buffer);
+    void BeginCommandBuffer(const VkCommandBufferUsageFlags command_buffer_useage_flags, const VkCommandBufferInheritanceInfo command_buffer_inheritance_info, const VkCommandBuffer& command_buffer);
+    void EndCommandBuffer( const VkCommandBuffer& command_buffer );
+    void SubmitCommandBuffer( const VkQueue& queue, VkCommandBuffer& command_buffer );
+    void FreeCommandBuffer( const VkDevice& device, const VkCommandPool& command_pool, const VkCommandBuffer& command_buffer );
 }

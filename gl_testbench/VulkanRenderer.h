@@ -6,6 +6,7 @@
 #include "ConstantBufferVK.h"
 #include "MaterialVK.h"
 #include "VertexBufferVK.h"
+#include "BindBufferVK.h"
 
 #define BUILD_ENABLE_VULKAN_DEBUG 1
 #include <vulkan/vulkan.h>
@@ -106,6 +107,8 @@ private:
     std::vector<VkImageView> m_swapchain_image_view_list;
 
     std::vector<VertexBufferVK*> m_vertex_buffer_list;
+
+    std::map<unsigned int, BindBufferVK*> m_bind_buffer_map;
 
     std::map<unsigned int, ConstantBufferVK*> m_constant_buffer_map;
     std::vector<MaterialVK*> m_material_list;

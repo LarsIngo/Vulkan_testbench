@@ -12,19 +12,14 @@ GPUMemoryBlock::GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& p
     m_alignemnt = 0;
 
     VkPhysicalDeviceProperties physical_device_proterties;
-    vkGetPhysicalDeviceProperties(*m_p_physical_device, &physical_device_proterties);
-    switch (buffer_usage_flags)
-    {
-    case VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT:
+    vkGetPhysicalDeviceProperties(*m_p_physical_device, &physical_device_proterties); 
+
+    if (buffer_usage_flags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
         m_min_offset_alignment = physical_device_proterties.limits.minUniformBufferOffsetAlignment;
-        break;
-    case VK_BUFFER_USAGE_STORAGE_BUFFER_BIT:
+    else if (buffer_usage_flags & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
         m_min_offset_alignment = physical_device_proterties.limits.minStorageBufferOffsetAlignment;
-        break;
-    default:
-        assert(0 && "GPUMemoryBlock::GPUMemoryBlock : NO VALID VkBufferUsageFlags");
-        break;
-    }
+    else
+        m_min_offset_alignment = 0;
 
     VkBufferCreateInfo buffer_create_info = {};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -61,8 +56,14 @@ size_t GPUMemoryBlock::Allocate(size_t size)
     std::size_t offset = m_offset;
 
     // Alignment
-    std::size_t alignment = (offset + size) % m_min_offset_alignment;
-    if (alignment != 0) alignment = m_min_offset_alignment - alignment;
+    std::size_t alignment;
+    if (m_min_offset_alignment == 0)
+        alignment = 0;
+    else
+    {
+        alignment = (offset + size) % m_min_offset_alignment;
+        if (alignment != 0) alignment = m_min_offset_alignment - alignment;
+    }
 
     if (m_alignemnt == 0) m_alignemnt = size + alignment;
     else assert(m_alignemnt == size + alignment);
