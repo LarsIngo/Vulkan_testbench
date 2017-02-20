@@ -123,6 +123,8 @@ private:
     std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
 
     VkRenderPass m_render_pass = VK_NULL_HANDLE;
+    VkRenderPass m_init_render_pass = VK_NULL_HANDLE;
+    std::size_t m_rendered_frames_count = 0;
 
     //VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
     //VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;

@@ -20,7 +20,7 @@ namespace vkTools
 
     VkPipelineShaderStageCreateInfo CreatePipelineShaderStageCreateInfo( const VkDevice& device, const VkShaderModule& shader_module, const VkShaderStageFlagBits& stage_bit, const char* name );
 
-    void CreateRenderPass( const VkDevice& device, const VkFormat& format, VkRenderPass& render_pass );
+    void CreateRenderPass( const VkDevice& device, const VkFormat& format, const VkImageLayout& initial_layout, const VkImageLayout& final_layout, VkRenderPass& render_pass );
 
     void CreateFramebuffer( const VkDevice& device, const VkExtent2D extent, const VkRenderPass& render_pass, const VkImageView& image_view, VkFramebuffer& framebuffer );
 

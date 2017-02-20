@@ -222,6 +222,7 @@ void VulkanRenderer::frame()
     VkDescriptorSetLayout descriptor_set_layout = MaterialVK::GetDescriptorSetLayout();
     VkDescriptorSet descriptor_set =  MaterialVK::GetDescriptorSet();
     VkDescriptorPool descriptor_pool = MaterialVK::GetDescriptorPool();
+    VkRenderPass& render_pass = m_rendered_frames_count < m_swapchain_framebuffer_list.size() ? m_init_render_pass : m_render_pass;
 
     std::vector<VkWriteDescriptorSet> write_desc_set_list;
     {
@@ -278,7 +279,7 @@ void VulkanRenderer::frame()
 
     VkRenderPassBeginInfo render_pass_begin_info = {};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = m_render_pass;
+    render_pass_begin_info.renderPass = render_pass;
     render_pass_begin_info.framebuffer = swapchain_frameBuffer;
     render_pass_begin_info.renderArea.offset = { 0, 0 };
     render_pass_begin_info.renderArea.extent = m_swapchain_extent;
@@ -324,7 +325,7 @@ void VulkanRenderer::frame()
     vkTools::ResetCommandBuffer(command_buffer);
     // END FRAME.
 
-    vkDestroyFramebuffer(m_device, swapchain_frameBuffer, nullptr);
+    //vkDestroyFramebuffer(m_device, swapchain_frameBuffer, nullptr);
 
     VkSubmitInfo submit_info = {};
     {
@@ -344,6 +345,7 @@ void VulkanRenderer::frame()
         it.second->Reset();
 
     submit_index = 0;
+    m_rendered_frames_count++;
 }
 
 
@@ -738,13 +740,16 @@ void VulkanRenderer::m_DeInitSwapchainImageViews()
 
 void VulkanRenderer::m_InitRenderPass()
 {
-    vkTools::CreateRenderPass(m_device, m_surface_format.format, m_render_pass);
+    vkTools::CreateRenderPass(m_device, m_surface_format.format, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, m_render_pass);
+    vkTools::CreateRenderPass(m_device, m_surface_format.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, m_init_render_pass);
 }
 
 void VulkanRenderer::m_DeInitRenderPass()
 {
     vkDestroyRenderPass(m_device, m_render_pass, nullptr);
     m_render_pass = VK_NULL_HANDLE;
+    vkDestroyRenderPass(m_device, m_init_render_pass, nullptr);
+    m_init_render_pass = VK_NULL_HANDLE;
 }
 //
 //void VulkanRenderer::m_InitGraphicsPipeline()
@@ -838,8 +843,8 @@ void VulkanRenderer::m_DeInitCommandBuffers()
 void VulkanRenderer::m_InitFrameBuffers()
 {
     m_swapchain_framebuffer_list.resize(m_swapchain_image_count);
-    for ( uint32_t i = 0; i < m_swapchain_image_count; ++i )
-        vkTools::CreateFramebuffer( m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[ i ], m_swapchain_framebuffer_list[ i ] );
+    for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
+        vkTools::CreateFramebuffer(m_device, m_swapchain_extent, m_render_pass, m_swapchain_image_view_list[i], m_swapchain_framebuffer_list[i]);
 }
 
 void VulkanRenderer::m_DeInitFrameBuffers()
