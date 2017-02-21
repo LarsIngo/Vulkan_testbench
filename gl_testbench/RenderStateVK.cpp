@@ -3,7 +3,7 @@
 
 RenderStateVK::RenderStateVK()
 {
-    //_wireframe = false;
+    m_wireframe = false;
 }
 
 RenderStateVK::~RenderStateVK()
@@ -31,5 +31,10 @@ void RenderStateVK::set()
 //}
 
 void RenderStateVK::setWireFrame(bool wireframe) {
-    //_wireframe = wireframe;
+    m_wireframe = wireframe;
+}
+
+VkPolygonMode RenderStateVK::GetPolygonMode()
+{
+    return m_wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
 }

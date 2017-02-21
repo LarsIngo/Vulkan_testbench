@@ -192,6 +192,13 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
+    for (auto& draw_list : m_draw_map)
+    {
+        Technique* t = draw_list.first;
+        MaterialVK* m = (MaterialVK*)t->material;
+        RenderStateVK* r = (RenderStateVK*)t->renderState;
+        m->Build(r->GetPolygonMode());
+    }
 
     //for (auto mesh : m_draw_list)
     //{
@@ -317,6 +324,8 @@ void VulkanRenderer::frame()
         Technique* t = draw_list.first;
         MaterialVK* m = (MaterialVK*)t->material;
 
+        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
+
         for (MeshEntry& entry : draw_list.second)
         {
             Mesh* mesh = entry.mesh;
@@ -325,10 +334,11 @@ void VulkanRenderer::frame()
             std::vector<std::uint32_t> offset_list = { i*64, i*64, i*64, i*32 };
             vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &descriptor_set, offset_list.size(), offset_list.data());
 
-            vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
-
             vkCmdDraw(command_buffer, 3, 1, 0, 0);
+
+            //break;
         }
+        //break;
     }
 
     vkCmdEndRenderPass(command_buffer);
@@ -361,6 +371,7 @@ void VulkanRenderer::frame()
 
     submit_index = 0;
     m_rendered_frames_count++;
+    m_draw_map.clear();
 }
 
 
@@ -575,6 +586,7 @@ void VulkanRenderer::m_InitDevice()
         vkEnumeratePhysicalDevices(m_instance, &gpu_count, gpu_list.data());
         m_gpu = gpu_list[0];
         vkGetPhysicalDeviceProperties(m_gpu, &m_physical_device_proterties);
+        vkGetPhysicalDeviceFeatures(m_gpu, &m_physical_device_features);
     }
 
     m_graphics_family_index = vkTools::FindGraphicsFamilyIndex(m_gpu);
@@ -594,6 +606,7 @@ void VulkanRenderer::m_InitDevice()
     device_create_info.ppEnabledLayerNames = m_device_extension_list.data();
     device_create_info.enabledExtensionCount = static_cast<uint32_t>(m_device_extension_list.size());
     device_create_info.ppEnabledExtensionNames = m_device_extension_list.data();
+    device_create_info.pEnabledFeatures = &m_physical_device_features;
 
     vkTools::VkErrorCheck(vkCreateDevice(m_gpu, &device_create_info, nullptr, &m_device));
 
@@ -803,6 +816,9 @@ void VulkanRenderer::m_DeInitDeviceMemory()
 
     for (auto& it : m_constant_buffer_map)
         delete it.second;
+
+    for (auto& it : m_texture_list)
+        delete it;
 }
 
 void VulkanRenderer::m_InitCommandPool()

@@ -89,6 +89,7 @@ private:
     VkDevice m_device = VK_NULL_HANDLE;
     VkPhysicalDevice m_gpu = VK_NULL_HANDLE;
     VkPhysicalDeviceProperties m_physical_device_proterties = {};
+    VkPhysicalDeviceFeatures m_physical_device_features = {};
     uint32_t m_graphics_family_index = 0;
     uint32_t m_present_family_index = 0;
 

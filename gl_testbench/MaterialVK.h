@@ -66,6 +66,8 @@ class MaterialVK : public Material
         static VkDescriptorSet& GetDescriptorSet();
         static VkDescriptorPool& GetDescriptorPool();
 
+        void Build(VkPolygonMode poly_mode);
+
     private:
         //// map from ShaderType to GL_VERTEX_SHADER, should be static.
         //GLuint mapShaderEnum[4];
@@ -90,6 +92,7 @@ class MaterialVK : public Material
         std::map<std::string, GPUMemoryBlock*> m_constant_memory_map;
 
         std::map<VkShaderStageFlagBits, VkShaderModule> m_shader_module_map;
+        std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_list;
 
         VkRenderPass* m_p_render_pass;
         static VkDescriptorSetLayout m_desc_set_layout;
@@ -98,5 +101,7 @@ class MaterialVK : public Material
 
         static VkDescriptorSet m_descriptor_set;
         static VkDescriptorPool m_descriptor_pool;
+
+        bool m_built = false;
 };
 

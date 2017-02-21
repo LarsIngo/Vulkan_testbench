@@ -209,7 +209,6 @@ int initialiseTestbench()
 	techniques[1]->renderState = renderer->makeRenderState();
 	techniques[2]->renderState = renderer->makeRenderState();
 
-
 	// create texture
 	Texture2D* fatboy = renderer->makeTexture2D();
 	fatboy->loadFromFile("../assets/textures/fatboy.png");
