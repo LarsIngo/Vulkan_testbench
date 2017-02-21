@@ -24,7 +24,7 @@ GPUMemoryBlock::GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& p
     VkBufferCreateInfo buffer_create_info = {};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_create_info.size = m_total_size;
-    buffer_create_info.usage = buffer_usage_flags;// VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;//VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    buffer_create_info.usage = buffer_usage_flags;
     buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     vkTools::VkErrorCheck(vkCreateBuffer(*m_p_device, &buffer_create_info, nullptr, &m_buffer));
 
@@ -35,7 +35,7 @@ GPUMemoryBlock::GPUMemoryBlock(const VkDevice& device, const VkPhysicalDevice& p
         VkMemoryAllocateInfo memory_allocate_info = {};
         memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memory_allocate_info.allocationSize = memory_requirements.size;
-        memory_allocate_info.memoryTypeIndex = vkTools::FindMemoryType(*m_p_physical_device, memory_requirements.memoryTypeBits, memory_property_flags);// VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        memory_allocate_info.memoryTypeIndex = vkTools::FindMemoryType(*m_p_physical_device, memory_requirements.memoryTypeBits, memory_property_flags);
 
         vkTools::VkErrorCheck(vkAllocateMemory(*m_p_device, &memory_allocate_info, nullptr, &m_device_memory));
     }

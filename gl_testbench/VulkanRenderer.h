@@ -7,6 +7,8 @@
 #include "MaterialVK.h"
 #include "VertexBufferVK.h"
 #include "BindBufferVK.h"
+#include "Texture2DVK.h"
+#include "Sampler2DVK.h"
 
 #define BUILD_ENABLE_VULKAN_DEBUG 1
 #include <vulkan/vulkan.h>
@@ -111,6 +113,8 @@ private:
     std::map<unsigned int, std::uint32_t> m_alignment_map;
 
     std::vector<MaterialVK*> m_material_list;
+    std::vector<Texture2DVK*> m_texture_list;
+    std::vector<Sampler2DVK*> m_sampler_list;
 
     VkCommandPool m_command_pool = VK_NULL_HANDLE;
     VkQueue m_graphics_queue = VK_NULL_HANDLE;

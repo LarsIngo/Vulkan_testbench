@@ -58,12 +58,16 @@ Mesh* VulkanRenderer::makeMesh()
 
 Texture2D* VulkanRenderer::makeTexture2D()
 {
-    return (Texture2D*)new Texture2DVK();
+    Texture2DVK* tex = new Texture2DVK(m_device, m_gpu, m_graphics_queue, m_command_pool);
+    m_texture_list.push_back(tex);
+    return (Texture2D*)tex;
 }
 
 Sampler2D* VulkanRenderer::makeSampler2D()
 {
-    return (Sampler2D*)new Sampler2DVK();
+    Sampler2DVK* samp = new Sampler2DVK(m_device, m_gpu);
+    m_sampler_list.push_back(samp);
+    return (Sampler2D*)samp;
 }
 
 ConstantBuffer* VulkanRenderer::makeConstantBuffer(std::string NAME, unsigned int location)
@@ -267,11 +271,10 @@ void VulkanRenderer::frame()
         }
         { // DIFFUSE_SLOT
             unsigned int location = DIFFUSE_SLOT;
-            Texture2DVK* tex = nullptr;
             VkDescriptorImageInfo descriptor_image_info;
-            descriptor_image_info.imageLayout = tex->GetLayout();
-            descriptor_image_info.imageView = tex->GetView();
-            descriptor_image_info.sampler = tex->GetSampler();
+            descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            descriptor_image_info.imageView = m_texture_list[0]->GetImageView();
+            descriptor_image_info.sampler = m_sampler_list[0]->GetSampler();
             write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             write_desc_set.dstBinding = location;
             write_desc_set.pImageInfo = &descriptor_image_info;
