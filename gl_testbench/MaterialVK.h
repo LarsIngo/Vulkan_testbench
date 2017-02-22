@@ -62,10 +62,6 @@ class MaterialVK : public Material
 
         void Reset();
 
-        static VkDescriptorSetLayout& GetDescriptorSetLayout();
-        static VkDescriptorSet& GetDescriptorSet();
-        static VkDescriptorPool& GetDescriptorPool();
-
         void Build(VkPolygonMode poly_mode);
 
     private:
@@ -98,9 +94,9 @@ class MaterialVK : public Material
         VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
         VkPipeline m_pipeline = VK_NULL_HANDLE;
 
-        static VkDescriptorSetLayout m_desc_set_layout;
-        static VkDescriptorSet m_descriptor_set;
-        static VkDescriptorPool m_descriptor_pool;
+        VkDescriptorSetLayout m_desc_set_layout = VK_NULL_HANDLE;
+        VkDescriptorSet m_descriptor_set = VK_NULL_HANDLE;
+        VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
 
         bool m_built = false;
 };

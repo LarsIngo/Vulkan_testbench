@@ -14,10 +14,6 @@
 
 typedef unsigned int uint;
 
-VkDescriptorSetLayout MaterialVK::m_desc_set_layout = VK_NULL_HANDLE;
-VkDescriptorSet MaterialVK::m_descriptor_set = VK_NULL_HANDLE;
-VkDescriptorPool MaterialVK::m_descriptor_pool = VK_NULL_HANDLE;
-
 //// recursive function to split a string by a delimiter
 //// easier to read than all that crap using STL...
 //void split(std::string text, std::vector<std::string>* temp, const char delim = ' ')
@@ -297,7 +293,6 @@ int MaterialVK::compileMaterial(std::string& errString)
 
     //CreatePipelineLayout
     {
-        if (m_desc_set_layout == VK_NULL_HANDLE)
         {
             std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_binding_list;
             {
@@ -355,8 +350,6 @@ int MaterialVK::compileMaterial(std::string& errString)
     //VkVertexInputBindingDescription shader_input_bind = Vertex::GetBindingDescription();
 
     
-
-    if (m_descriptor_pool == VK_NULL_HANDLE)
     {
         {
             std::vector<VkDescriptorPoolSize> desc_pool_size_list;
@@ -426,21 +419,6 @@ void MaterialVK::Reset()
 {
     for (auto& it : constantBuffers)
         it.second->Reset();
-}
-
-VkDescriptorSetLayout& MaterialVK::GetDescriptorSetLayout()
-{
-    return m_desc_set_layout;
-}
-
-VkDescriptorSet& MaterialVK::GetDescriptorSet()
-{
-    return m_descriptor_set;
-}
-
-VkDescriptorPool& MaterialVK::GetDescriptorPool()
-{
-    return m_descriptor_pool;
 }
 
 void MaterialVK::Build(VkPolygonMode poly_mode)

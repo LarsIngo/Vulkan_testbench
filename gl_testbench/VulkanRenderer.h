@@ -145,10 +145,12 @@ private:
     std::size_t m_material_submit_index = 0;
     std::map<Technique*, std::size_t> m_draw_key_map;
     std::map<std::size_t, Technique*> m_inv_draw_key_map;
-    //std::map<Technique*, MeshEntry> m_draw_map;
+    std::map<MaterialVK*, Technique*> m_tech_mat_map;
 
     std::size_t m_submit_index = 0;
     std::vector<std::vector<MeshEntry>> m_draw_lists;
+
+    std::vector<MeshEntry> m_global_draw_list;
 
     // Wire frame mode.
     bool m_global_wireframe_mode = false;

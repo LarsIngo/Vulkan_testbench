@@ -189,10 +189,13 @@ void VulkanRenderer::submit(Mesh* mesh)
         m_inv_draw_key_map[m_material_submit_index] = mesh->technique;
         m_material_submit_index++;
         m_draw_lists.resize(m_draw_lists.size() + 1);
+        m_tech_mat_map[(MaterialVK*)mesh->technique->material] = mesh->technique;
     }
     std::size_t list_index = m_draw_key_map[mesh->technique];
     m_draw_lists[list_index].push_back(entry);
     m_submit_index++;
+
+    m_global_draw_list.push_back(entry);
 }
 
 /*
@@ -201,14 +204,107 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
-    std::map<unsigned int, std::map<unsigned int, ConstantBufferVK*>> material_constant_buffers;
-    for (std::size_t mat_sub_i = 0; mat_sub_i < m_draw_lists.size(); ++mat_sub_i)
+    std::map<MaterialVK*, std::vector<VkWriteDescriptorSet>> write_desc_set_map;
+    std::map<MaterialVK*, std::vector<std::uint32_t>> alignment_map;
+
+    std::size_t desc_buff_index = 0;
+    std::vector<VkDescriptorImageInfo> all_desc_image_info_list;
+    all_desc_image_info_list.resize(15);
+
+    std::size_t desc_image_index = 0;
+    std::vector<VkDescriptorBufferInfo> all_desc_buff_info_list;
+    all_desc_buff_info_list.resize(15);
+
+    std::vector<VkWriteDescriptorSet> all_write_desc_set_list;
+    all_write_desc_set_list.resize(18);
+
+    VkRenderPass& render_pass = m_rendered_frames_count < m_swapchain_framebuffer_list.size() ? m_init_render_pass : m_render_pass;
+
+    for (int mat_sub_i = 0; mat_sub_i < m_draw_lists.size(); ++mat_sub_i)
     {
         Technique* t = m_inv_draw_key_map[mat_sub_i];
         MaterialVK* m = (MaterialVK*)t->material;
         RenderStateVK* r = (RenderStateVK*)t->renderState;
         m->Build(r->GetPolygonMode());
-        material_constant_buffers[mat_sub_i] = m->constantBuffers;
+
+        std::vector<std::uint32_t> alignment_list;
+        std::vector<VkWriteDescriptorSet> write_desc_set_list;
+        {
+            VkWriteDescriptorSet write_desc_set;
+            write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_set.pNext = NULL;
+            write_desc_set.dstSet = m->m_descriptor_set;
+            write_desc_set.dstArrayElement = 0;
+            write_desc_set.descriptorCount = 1;
+            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+            write_desc_set.pImageInfo = NULL;
+            { // POSITION
+                unsigned int location = POSITION;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo& desc_buff_info = all_desc_buff_info_list[desc_buff_index++];
+                desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+                alignment_list.push_back(buff->GetAlignment(location));
+            }
+            { // NORMAL
+                unsigned int location = NORMAL;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo& desc_buff_info = all_desc_buff_info_list[desc_buff_index++];
+                desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+                alignment_list.push_back(buff->GetAlignment(location));
+            }
+            { // TEXTCOORD
+                unsigned int location = TEXTCOORD;
+                VertexBufferVK* buff = m_vertex_buffer_list[location];
+                VkDescriptorBufferInfo& desc_buff_info = all_desc_buff_info_list[desc_buff_index++];
+                desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
+                write_desc_set.dstBinding = location;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+                alignment_list.push_back(buff->GetAlignment(location));
+            }
+            { // TRANSLATION
+                unsigned int location = TRANSLATION;
+                ConstantBufferVK* buff = m_constant_buffer_map[location];
+                VkDescriptorBufferInfo& desc_buff_info = all_desc_buff_info_list[desc_buff_index++];
+                desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
+                write_desc_set.dstBinding = location;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+                alignment_list.push_back(buff->GetAlignment());
+            }
+            { // DIFFUSE_TINT
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                unsigned int location = DIFFUSE_TINT;
+                ConstantBufferVK* cbuff = m->constantBuffers[location];
+                VkBuffer buff = *cbuff->GetBuffer();
+                VkDescriptorBufferInfo& desc_buff_info = all_desc_buff_info_list[desc_buff_index++];
+                desc_buff_info = { buff, 0, cbuff->GetAlignment() };
+                write_desc_set.dstBinding = location;
+                write_desc_set.pBufferInfo = &desc_buff_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+            { // DIFFUSE_SLOT
+                write_desc_set.pBufferInfo = NULL;
+                unsigned int location = DIFFUSE_SLOT;
+                VkDescriptorImageInfo& desc_image_info = all_desc_image_info_list[desc_image_index++];
+                desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                desc_image_info.imageView = m_texture_list[0]->GetImageView();
+                desc_image_info.sampler = m_sampler_list[0]->GetSampler();
+                write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                write_desc_set.dstBinding = location;
+                write_desc_set.pImageInfo = &desc_image_info;
+                write_desc_set_list.push_back(write_desc_set);
+            }
+        }
+
+        write_desc_set_map[m] = write_desc_set_list;
+        alignment_map[m] = alignment_list;
     }
 
     //for (auto mesh : m_draw_list)
@@ -241,80 +337,6 @@ void VulkanRenderer::frame()
     //}
     //m_draw_list.clear();
 
-    VkDescriptorSetLayout descriptor_set_layout = MaterialVK::GetDescriptorSetLayout();
-    VkDescriptorSet descriptor_set =  MaterialVK::GetDescriptorSet();
-    VkDescriptorPool descriptor_pool = MaterialVK::GetDescriptorPool();
-    VkRenderPass& render_pass = m_rendered_frames_count < m_swapchain_framebuffer_list.size() ? m_init_render_pass : m_render_pass;
-
-    std::vector<VkWriteDescriptorSet> write_desc_set_list;
-    std::vector<std::uint32_t> aligment_list;
-    {
-        VkWriteDescriptorSet write_desc_set;
-        write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_desc_set.pNext = NULL;
-        write_desc_set.dstSet = descriptor_set;
-        write_desc_set.dstArrayElement = 0;
-        write_desc_set.descriptorCount = 1;
-        write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-        { // POSITION
-            unsigned int location = POSITION;
-            VertexBufferVK* buff = m_vertex_buffer_list[location];
-            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
-            write_desc_set.dstBinding = location;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
-            aligment_list.push_back(buff->GetAlignment(location));
-        }
-        { // NORMAL
-            unsigned int location = NORMAL;
-            VertexBufferVK* buff = m_vertex_buffer_list[location];
-            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
-            write_desc_set.dstBinding = location;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
-            aligment_list.push_back(buff->GetAlignment(location));
-        }
-        { // TEXTCOORD
-            unsigned int location = TEXTCOORD;
-            VertexBufferVK* buff = m_vertex_buffer_list[location];
-            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(location), 0, buff->GetAlignment(location) };
-            write_desc_set.dstBinding = location;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
-            aligment_list.push_back(buff->GetAlignment(location));
-        }
-        { // TRANSLATION
-            unsigned int location = TRANSLATION;
-            ConstantBufferVK* buff = m_constant_buffer_map[location];
-            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
-            write_desc_set.dstBinding = location;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
-            aligment_list.push_back(buff->GetAlignment());
-        }
-        { // DIFFUSE_TINT
-            unsigned int location = DIFFUSE_TINT;
-            ConstantBufferVK* buff = material_constant_buffers[2][location];
-            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
-            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            write_desc_set.dstBinding = location;
-            write_desc_set.pBufferInfo = &desc_buff_info;
-            write_desc_set_list.push_back(write_desc_set);
-        }
-        { // DIFFUSE_SLOT
-            unsigned int location = DIFFUSE_SLOT;
-            VkDescriptorImageInfo descriptor_image_info;
-            descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            descriptor_image_info.imageView = m_texture_list[0]->GetImageView();
-            descriptor_image_info.sampler = m_sampler_list[0]->GetSampler();
-            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            write_desc_set.dstBinding = location;
-            write_desc_set.pImageInfo = &descriptor_image_info;
-            write_desc_set_list.push_back(write_desc_set);
-        }
-    }
-
-
 
     // GET NEXT IMAGE FROM SWAPCHAIN.
     vkTools::VkErrorCheck(vkAcquireNextImageKHR(m_device, m_swapchain, (std::numeric_limits<uint64_t>::max)(), m_present_complete_semaphore, VK_NULL_HANDLE, &m_render_swapchain_image_index));
@@ -341,28 +363,31 @@ void VulkanRenderer::frame()
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
-
-    for (int mat_sub_i = m_draw_lists.size()-1; mat_sub_i >= 0; --mat_sub_i)
+    std::vector<std::size_t> material_draw_order = { 1, 2, 0 };
+    for(auto& mat_sub_i : material_draw_order)
     {
         Technique* t = m_inv_draw_key_map[mat_sub_i];
         MaterialVK* m = (MaterialVK*)t->material;
 
+        std::vector<std::uint32_t>& alignment_list = alignment_map[m];
+        std::vector<VkWriteDescriptorSet>& write_desc_set_list = write_desc_set_map[m];
+        std::vector<std::uint32_t> offset_list;
+        offset_list.resize(alignment_list.size());
+
+        vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
+
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
-        std::vector<std::uint32_t> offset_list;
-        offset_list.resize(aligment_list.size());
-
-        for (MeshEntry& entry : m_draw_lists[mat_sub_i])
+        std::vector<MeshEntry>& draw_list = m_draw_lists[m_draw_key_map[t]];
+        for (MeshEntry& entry : draw_list)
         {
             Mesh* mesh = entry.mesh;
             std::uint32_t i = entry.index;
 
-           
             for (std::size_t a = 0; a < offset_list.size(); ++a)
-                offset_list[a] = aligment_list[a] * i;
+                offset_list[a] = alignment_list[a] * i;
             
-            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &descriptor_set, offset_list.size(), offset_list.data());
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &m->m_descriptor_set, offset_list.size(), offset_list.data());
 
             vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
@@ -393,8 +418,8 @@ void VulkanRenderer::frame()
 
 
     // RESET DEVICE BUFFERS.
-    for (auto& it : m_material_list)
-        it->Reset();
+    //for (auto& it : m_material_list)
+    //    it->Reset();
 
     for (auto& it : m_constant_buffer_map)
         it.second->Reset();
@@ -405,6 +430,7 @@ void VulkanRenderer::frame()
     m_draw_lists.clear();
     m_draw_key_map.clear();
     m_inv_draw_key_map.clear();
+    m_global_draw_list.clear();
 }
 
 
