@@ -141,6 +141,7 @@ private:
     {
         Mesh* mesh;
         std::size_t index;
+        Material* material;
     };
     std::size_t m_material_submit_index = 0;
     std::map<Technique*, std::size_t> m_draw_key_map;

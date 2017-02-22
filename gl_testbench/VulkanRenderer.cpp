@@ -182,6 +182,7 @@ void VulkanRenderer::submit(Mesh* mesh)
     MeshEntry entry;
     entry.mesh = mesh;
     entry.index = m_submit_index;
+    entry.material = mesh->technique->material;
 
     if (m_draw_key_map.find(mesh->technique) == m_draw_key_map.end())
     {
@@ -216,7 +217,6 @@ void VulkanRenderer::frame()
     all_desc_buff_info_list.resize(15);
 
     std::vector<VkWriteDescriptorSet> all_write_desc_set_list;
-    all_write_desc_set_list.resize(18);
 
     VkRenderPass& render_pass = m_rendered_frames_count < m_swapchain_framebuffer_list.size() ? m_init_render_pass : m_render_pass;
 
@@ -305,6 +305,9 @@ void VulkanRenderer::frame()
 
         write_desc_set_map[m] = write_desc_set_list;
         alignment_map[m] = alignment_list;
+
+        for(auto& it : write_desc_set_list)
+            all_write_desc_set_list.push_back(it);
     }
 
     //for (auto mesh : m_draw_list)
@@ -363,37 +366,29 @@ void VulkanRenderer::frame()
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    std::vector<std::size_t> material_draw_order = { 1, 2, 0 };
-    for(auto& mat_sub_i : material_draw_order)
+    vkUpdateDescriptorSets(m_device, all_write_desc_set_list.size(), all_write_desc_set_list.data(), 0, nullptr);
+
+    for(int id = m_global_draw_list.size() - 1; id >= 0; --id)
     {
-        Technique* t = m_inv_draw_key_map[mat_sub_i];
-        MaterialVK* m = (MaterialVK*)t->material;
+        MeshEntry& entry = m_global_draw_list[id];
+        Mesh* mesh = entry.mesh;
+        MaterialVK* m = (MaterialVK*)entry.material;
+        std::uint32_t i = entry.index;
 
         std::vector<std::uint32_t>& alignment_list = alignment_map[m];
         std::vector<VkWriteDescriptorSet>& write_desc_set_list = write_desc_set_map[m];
         std::vector<std::uint32_t> offset_list;
         offset_list.resize(alignment_list.size());
 
-        vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
-
+        for (std::size_t a = 0; a < offset_list.size(); ++a)
+            offset_list[a] = alignment_list[a] * i;
+            
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
-        std::vector<MeshEntry>& draw_list = m_draw_lists[m_draw_key_map[t]];
-        for (MeshEntry& entry : draw_list)
-        {
-            Mesh* mesh = entry.mesh;
-            std::uint32_t i = entry.index;
+        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &m->m_descriptor_set, offset_list.size(), offset_list.data());
 
-            for (std::size_t a = 0; a < offset_list.size(); ++a)
-                offset_list[a] = alignment_list[a] * i;
-            
-            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &m->m_descriptor_set, offset_list.size(), offset_list.data());
+        vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
-            vkCmdDraw(command_buffer, 3, 1, 0, 0);
-
-            //break;
-        }
-        //break;
     }
 
     vkCmdEndRenderPass(command_buffer);
