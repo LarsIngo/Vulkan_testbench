@@ -95,10 +95,10 @@ class MaterialVK : public Material
         std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_list;
 
         VkRenderPass* m_p_render_pass;
-        static VkDescriptorSetLayout m_desc_set_layout;
         VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
         VkPipeline m_pipeline = VK_NULL_HANDLE;
 
+        static VkDescriptorSetLayout m_desc_set_layout;
         static VkDescriptorSet m_descriptor_set;
         static VkDescriptorPool m_descriptor_pool;
 

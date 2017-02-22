@@ -201,12 +201,14 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
+    std::map<unsigned int, std::map<unsigned int, ConstantBufferVK*>> material_constant_buffers;
     for (std::size_t mat_sub_i = 0; mat_sub_i < m_draw_lists.size(); ++mat_sub_i)
     {
         Technique* t = m_inv_draw_key_map[mat_sub_i];
         MaterialVK* m = (MaterialVK*)t->material;
         RenderStateVK* r = (RenderStateVK*)t->renderState;
         m->Build(r->GetPolygonMode());
+        material_constant_buffers[mat_sub_i] = m->constantBuffers;
     }
 
     //for (auto mesh : m_draw_list)
@@ -245,6 +247,7 @@ void VulkanRenderer::frame()
     VkRenderPass& render_pass = m_rendered_frames_count < m_swapchain_framebuffer_list.size() ? m_init_render_pass : m_render_pass;
 
     std::vector<VkWriteDescriptorSet> write_desc_set_list;
+    std::vector<std::uint32_t> aligment_list;
     {
         VkWriteDescriptorSet write_desc_set;
         write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -260,6 +263,7 @@ void VulkanRenderer::frame()
             write_desc_set.dstBinding = location;
             write_desc_set.pBufferInfo = &desc_buff_info;
             write_desc_set_list.push_back(write_desc_set);
+            aligment_list.push_back(buff->GetAlignment(location));
         }
         { // NORMAL
             unsigned int location = NORMAL;
@@ -268,6 +272,7 @@ void VulkanRenderer::frame()
             write_desc_set.dstBinding = location;
             write_desc_set.pBufferInfo = &desc_buff_info;
             write_desc_set_list.push_back(write_desc_set);
+            aligment_list.push_back(buff->GetAlignment(location));
         }
         { // TEXTCOORD
             unsigned int location = TEXTCOORD;
@@ -276,11 +281,22 @@ void VulkanRenderer::frame()
             write_desc_set.dstBinding = location;
             write_desc_set.pBufferInfo = &desc_buff_info;
             write_desc_set_list.push_back(write_desc_set);
+            aligment_list.push_back(buff->GetAlignment(location));
         }
         { // TRANSLATION
             unsigned int location = TRANSLATION;
             ConstantBufferVK* buff = m_constant_buffer_map[location];
             VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
+            write_desc_set.dstBinding = location;
+            write_desc_set.pBufferInfo = &desc_buff_info;
+            write_desc_set_list.push_back(write_desc_set);
+            aligment_list.push_back(buff->GetAlignment());
+        }
+        { // DIFFUSE_TINT
+            unsigned int location = DIFFUSE_TINT;
+            ConstantBufferVK* buff = material_constant_buffers[2][location];
+            VkDescriptorBufferInfo desc_buff_info = { *buff->GetBuffer(), 0, buff->GetAlignment() };
+            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
             write_desc_set.dstBinding = location;
             write_desc_set.pBufferInfo = &desc_buff_info;
             write_desc_set_list.push_back(write_desc_set);
@@ -334,12 +350,18 @@ void VulkanRenderer::frame()
 
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
+        std::vector<std::uint32_t> offset_list;
+        offset_list.resize(aligment_list.size());
+
         for (MeshEntry& entry : m_draw_lists[mat_sub_i])
         {
             Mesh* mesh = entry.mesh;
             std::uint32_t i = entry.index;
 
-            std::vector<std::uint32_t> offset_list = { i*64, i*64, i*64, i*32 };
+           
+            for (std::size_t a = 0; a < offset_list.size(); ++a)
+                offset_list[a] = aligment_list[a] * i;
+            
             vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &descriptor_set, offset_list.size(), offset_list.data());
 
             vkCmdDraw(command_buffer, 3, 1, 0, 0);
