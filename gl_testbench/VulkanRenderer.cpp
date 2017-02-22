@@ -181,9 +181,18 @@ void VulkanRenderer::submit(Mesh* mesh)
     assert(mesh->technique != nullptr);
     MeshEntry entry;
     entry.mesh = mesh;
-    entry.index = submit_index;
-    m_draw_map[mesh->technique].push_back(entry);
-    submit_index++;
+    entry.index = m_submit_index;
+
+    if (m_draw_key_map.find(mesh->technique) == m_draw_key_map.end())
+    {
+        m_draw_key_map[mesh->technique] = m_material_submit_index;
+        m_inv_draw_key_map[m_material_submit_index] = mesh->technique;
+        m_material_submit_index++;
+        m_draw_lists.resize(m_draw_lists.size() + 1);
+    }
+    std::size_t list_index = m_draw_key_map[mesh->technique];
+    m_draw_lists[list_index].push_back(entry);
+    m_submit_index++;
 }
 
 /*
@@ -192,9 +201,9 @@ TODO.
 */
 void VulkanRenderer::frame()
 {
-    for (auto& draw_list : m_draw_map)
+    for (std::size_t mat_sub_i = 0; mat_sub_i < m_draw_lists.size(); ++mat_sub_i)
     {
-        Technique* t = draw_list.first;
+        Technique* t = m_inv_draw_key_map[mat_sub_i];
         MaterialVK* m = (MaterialVK*)t->material;
         RenderStateVK* r = (RenderStateVK*)t->renderState;
         m->Build(r->GetPolygonMode());
@@ -318,15 +327,14 @@ void VulkanRenderer::frame()
 
     vkUpdateDescriptorSets(m_device, write_desc_set_list.size(), write_desc_set_list.data(), 0, nullptr);
 
-    for (auto& draw_list : m_draw_map)
+    for (int mat_sub_i = m_draw_lists.size()-1; mat_sub_i >= 0; --mat_sub_i)
     {
-        draw_list.second.size(); 
-        Technique* t = draw_list.first;
+        Technique* t = m_inv_draw_key_map[mat_sub_i];
         MaterialVK* m = (MaterialVK*)t->material;
 
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
-        for (MeshEntry& entry : draw_list.second)
+        for (MeshEntry& entry : m_draw_lists[mat_sub_i])
         {
             Mesh* mesh = entry.mesh;
             std::uint32_t i = entry.index;
@@ -369,9 +377,12 @@ void VulkanRenderer::frame()
     for (auto& it : m_constant_buffer_map)
         it.second->Reset();
 
-    submit_index = 0;
+    m_material_submit_index = 0;
+    m_submit_index = 0;
     m_rendered_frames_count++;
-    m_draw_map.clear();
+    m_draw_lists.clear();
+    m_draw_key_map.clear();
+    m_inv_draw_key_map.clear();
 }
 
 
