@@ -183,22 +183,8 @@ void VulkanRenderer::submit(Mesh* mesh)
     assert(mesh->technique != nullptr);
     MeshEntry entry;
     entry.mesh = mesh;
-    entry.index = m_submit_index;
-    entry.material = mesh->technique->material;
-
-    if (m_draw_key_map.find(mesh->technique) == m_draw_key_map.end())
-    {
-        m_draw_key_map[mesh->technique] = m_material_submit_index;
-        m_inv_draw_key_map[m_material_submit_index] = mesh->technique;
-        m_material_submit_index++;
-        m_draw_lists.resize(m_draw_lists.size() + 1);
-        m_tech_mat_map[(MaterialVK*)mesh->technique->material] = mesh->technique;
-    }
-    std::size_t list_index = m_draw_key_map[mesh->technique];
-    m_draw_lists[list_index].push_back(entry);
-    m_submit_index++;
-
-    m_global_draw_list.push_back(entry);
+    entry.index = m_submit_index++;
+    m_draw_map[mesh->technique].push_back(entry);
 }
 
 /*
@@ -222,9 +208,9 @@ void VulkanRenderer::frame()
 
     VkRenderPass& render_pass = m_render_pass;
 
-    for (int mat_sub_i = 0; mat_sub_i < m_draw_lists.size(); ++mat_sub_i)
+    for (auto& it : m_draw_map)
     {
-        Technique* t = m_inv_draw_key_map[mat_sub_i];
+        Technique* t = it.first;
         MaterialVK* m = (MaterialVK*)t->material;
         RenderStateVK* r = (RenderStateVK*)t->renderState;
         m->Build(r->GetPolygonMode());
@@ -370,29 +356,33 @@ void VulkanRenderer::frame()
 
     vkUpdateDescriptorSets(m_device, all_write_desc_set_list.size(), all_write_desc_set_list.data(), 0, nullptr);
 
-    for(int id = 0; id < m_global_draw_list.size(); ++id)
+    for (auto& it : m_draw_map)
     {
-        MeshEntry& entry = m_global_draw_list[id];
-        Mesh* mesh = entry.mesh;
-        MaterialVK* m = (MaterialVK*)entry.material;
-        std::uint32_t i = entry.index;
-
-        std::vector<std::uint32_t>& alignment_list = alignment_map[m];
-        std::vector<VkWriteDescriptorSet>& write_desc_set_list = write_desc_set_map[m];
-        std::vector<std::uint32_t> offset_list;
-        offset_list.resize(alignment_list.size());
-
-        for (std::size_t a = 0; a < offset_list.size(); ++a)
-            offset_list[a] = alignment_list[a] * i;
+        MaterialVK* m = (MaterialVK*)it.first->material;
 
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline);
 
-        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &m->m_descriptor_set, offset_list.size(), offset_list.data());
+        for (auto& entry : it.second)
+        {
+            Mesh* mesh = entry.mesh;
+            int i = entry.index;
 
-        vkCmdSetDepthBias(command_buffer, - (0.1 + 10 * (i/m_global_draw_list.size())), 0, 0);
+            std::vector<std::uint32_t>& alignment_list = alignment_map[m];
+            std::vector<VkWriteDescriptorSet>& write_desc_set_list = write_desc_set_map[m];
+            std::vector<std::uint32_t> offset_list;
+            offset_list.resize(alignment_list.size());
 
-        vkCmdDraw(command_buffer, 3, 1, 0, 0);
+            for (std::size_t a = 0; a < offset_list.size(); ++a)
+                offset_list[a] = alignment_list[a] * i;
 
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m->m_pipeline_layout, 0, 1, &m->m_descriptor_set, offset_list.size(), offset_list.data());
+
+            float bias = -(float)i;
+            vkCmdSetDepthBias(command_buffer, bias, 0, 0);
+
+            vkCmdDraw(command_buffer, 3, 1, 0, 0);
+
+        }
     }
 
     vkCmdEndRenderPass(command_buffer);
@@ -423,13 +413,9 @@ void VulkanRenderer::frame()
     for (auto& it : m_constant_buffer_map)
         it.second->Reset();
 
-    m_material_submit_index = 0;
     m_submit_index = 0;
     m_rendered_frames_count++;
-    m_draw_lists.clear();
-    m_draw_key_map.clear();
-    m_inv_draw_key_map.clear();
-    m_global_draw_list.clear();
+    m_draw_map.clear();
 }
 
 
