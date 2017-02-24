@@ -128,8 +128,12 @@ private:
     std::vector<VkCommandBuffer> m_swapchain_command_buffer_list;
 
     VkRenderPass m_render_pass = VK_NULL_HANDLE;
-    VkRenderPass m_init_render_pass = VK_NULL_HANDLE;
     std::size_t m_rendered_frames_count = 0;
+
+    VkImage m_depth_image = VK_NULL_HANDLE;
+    VkDeviceMemory m_depth_memory = VK_NULL_HANDLE;
+    VkImageView m_depth_image_view = VK_NULL_HANDLE;
+    VkFormat m_depth_format;
 
     //VkShaderModule m_vert_shader_module = VK_NULL_HANDLE;
     //VkShaderModule m_frag_shader_module = VK_NULL_HANDLE;
@@ -218,4 +222,8 @@ private:
     // Frame buffers.
     void m_InitFrameBuffers();
     void m_DeInitFrameBuffers();
+
+    // Depth buffer.
+    void m_InitDepthBuffer();
+    void m_DeInitDepthBuffer();
 };

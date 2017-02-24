@@ -24,7 +24,4 @@ class Texture2DVK : public Texture2D
         VkImage m_image = VK_NULL_HANDLE;
         VkDeviceMemory m_image_memory = VK_NULL_HANDLE;
         VkImageView m_image_view = VK_NULL_HANDLE;
-
-        VkImage m_init_image = VK_NULL_HANDLE;
-        VkDeviceMemory m_init_image_memory = VK_NULL_HANDLE;
 };

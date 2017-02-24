@@ -158,7 +158,6 @@ int initialiseTestbench()
 
 	// triangle geometry:
 	float4 triPos[3] = { { 0.0f,  0.05, 0.0f, 1.0f },{ 0.05, -0.05, 0.0f, 1.0f },{ -0.05, -0.05, 0.0f, 1.0f } };
-    //float4 triPos[3] = { { 0.0f,  0.05f, 0.0f, 1.0f },{ 0.05, -0.05, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f } };
 	float4 triNor[3] = { { 0.0f,  0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f, 0.0f } };
 	float2 triUV[3] =  { { 0.5f,  -0.99f },{ 1.49f, 1.1f },{ -0.51, 1.1f } };
 
@@ -221,6 +220,9 @@ int initialiseTestbench()
 		Mesh* m = renderer->makeMesh();
 
 		constexpr auto numberOfElements = std::extent<decltype(triPos)>::value;
+        //triPos[0].z = 0 - 0.001 * i;
+        //triPos[1].z = 0 - 0.001 * i;
+        //triPos[2].z = 0 - 0.001 * i;
 
 		VertexBuffer* pos = renderer->makeVertexBuffer();
 		pos->setData(triPos, sizeof(triPos), VertexBuffer::STATIC);
@@ -246,7 +248,7 @@ int initialiseTestbench()
 			
 		}
 		else 
-			m->technique = techniques[ i % 2];
+			m->technique = techniques[ i % 2 ];
 
 		scene.push_back(m);
 	}
