@@ -226,11 +226,22 @@ int MaterialVK::compileShader(ShaderType type, std::string& err)
     std::ofstream bfile("CompileSPV.bat");
     assert(bfile.is_open());
     bfile << "glslangValidator.exe -V " << sName << " -o " << "shader.spv" << std::endl;
-    bfile << "timeout 3";
+    bfile << "timeout 1";
     bfile.close();
 
-    ShellExecute(NULL, L"open", L"CompileSPV.bat", NULL, NULL, SW_SHOWNORMAL);
-    Sleep(250);
+    SHELLEXECUTEINFO ShExecInfo = { 0 };
+    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = NULL;
+    ShExecInfo.lpFile = L"CompileSPV.bat";
+    ShExecInfo.lpParameters = L"";
+    ShExecInfo.lpDirectory = NULL;
+    ShExecInfo.nShow = SW_SHOW;
+    ShExecInfo.hInstApp = NULL;
+    ShellExecuteEx(&ShExecInfo);
+    WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+
     // Load spv shader.
     const VkShaderStageFlagBits& stageBit = m_shader_stage_bits_map[type];
     assert(m_shader_module_map.find(stageBit) == m_shader_module_map.end());
